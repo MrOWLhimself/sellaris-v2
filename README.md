@@ -101,3 +101,29 @@ exactly and then go further with the cost data Loyverse can't show
   a foreign key on `tenants`.
 - No backup existed last time → full loss of the codebase. This repo +
   regular GitHub pushes fixes that permanently.
+
+## Supabase project
+
+- **Project**: `Sellaris` (`wguxhkuigcotsevvcerk`, eu-west-1, org: 1105 Media NG)
+- **URL**: https://wguxhkuigcotsevvcerk.supabase.co
+- Separate from the CitiPlug/Skor Africa project (`uysipsegizbixwgvwdzl`) and
+  the Ijebu Shutdown project — Sellaris gets its own dedicated project.
+- Migrations applied: core tenancy (tenants/branches/staff), items +
+  inventory (categories/items/suppliers/purchase_orders/GRNs), orders +
+  bar flow (orders/order_items/payments/staff_debt).
+- **Key mechanism verified working**: GRN receipt auto-updates item cost
+  (weighted average) and stock via trigger — no manual cost entry. Selling
+  more than available stock is blocked at the database level (tested:
+  raises `Insufficient stock` and rejects the transaction). This is the
+  structural fix for both Loyverse problems observed at Roger's Lounge
+  (₦0 cost, negative stock).
+- Roger's Lounge seeded as tenant #1, Ijagun as its branch, with the same
+  9-item menu the POS UI uses, now with real weighted-avg cost (45% margin)
+  after a test GRN.
+- **Not yet built: staff auth/login.** RLS policies are scoped to
+  `auth.uid()` via the `staff` table, so the app currently can't read data
+  without a logged-in session — this is intentionally left secure rather
+  than opened up for convenience. Auth is the next required piece before
+  the frontend shows live data end to end.
+- `.env.local` holds `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
+  — gitignored, see `.env.example` for the shape.
