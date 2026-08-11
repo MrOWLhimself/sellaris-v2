@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/*
+  Sellaris design tokens.
+  Cool violet + brass-gold. Dark-first (POS/admin run on dark theme).
+  Every component reads these variables — never hardcode a hex value
+  in a component file. Change the brand here, it propagates everywhere.
+*/
+
+:root {
+  /* Surfaces */
+  --ink: #13111F;
+  --surface: #1C1930;
+  --surface-2: #26213D;
+  --surface-3: #302A4C;
+  --line: rgba(242, 240, 245, 0.08);
+  --line-strong: rgba(242, 240, 245, 0.16);
+
+  /* Brand */
+  --violet: #5B3FA6;
+  --violet-dim: #432E7A;
+  --violet-bright: #7A5AC9;
+  --gold: #C9A227;
+  --gold-dim: #8F7419;
+
+  /* Text */
+  --ink-text: #F2F0F5;
+  --ink-text-muted: #8B87A0;
+  --ink-text-faint: #5E5A72;
+
+  /* Status (functional only, never brand) */
+  --success: #3FA66B;
+  --success-bg: rgba(63, 166, 107, 0.14);
+  --warning: #D6A237;
+  --warning-bg: rgba(214, 162, 55, 0.14);
+  --danger: #D6555B;
+  --danger-bg: rgba(214, 85, 91, 0.14);
+  --info: #5B7FC7;
+  --info-bg: rgba(91, 127, 199, 0.14);
+
+  /* Type */
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Radius / spacing scale */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+body {
+  background: var(--ink);
+  color: var(--ink-text);
+  font-family: var(--font-body);
+}
