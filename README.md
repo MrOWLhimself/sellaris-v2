@@ -127,3 +127,20 @@ exactly and then go further with the cost data Loyverse can't show
   the frontend shows live data end to end.
 - `.env.local` holds `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
   — gitignored, see `.env.example` for the shape.
+
+## Auth (staff login)
+
+- Email/password auth via Supabase Auth (`AuthContext.jsx`).
+- First-time setup: sign up with any email/password, then "claim"
+  Roger's Lounge as owner via the `claim_tenant_owner` RPC — a
+  security-definer function that only succeeds once per tenant (blocks
+  a second person from claiming an already-owned business). Anon access
+  to this function is explicitly revoked; only logged-in users can call it.
+- All routes except `/login` are behind `ProtectedRoute`, which checks
+  both a valid session AND a linked `staff` row — being logged in isn't
+  enough, you need to be staff at a tenant.
+- POS and Dashboard now read `tenant_id`/`branch_id` from the logged-in
+  staff member (`useAuth().staff`), not a hardcoded constant.
+- Security advisors: zero unintended warnings (one expected warning
+  remains on `claim_tenant_owner` being callable by any authenticated
+  user — that's by design, the function's own logic is the real gate).

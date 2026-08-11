@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Dashboard', end: true },
@@ -12,6 +13,8 @@ const navItems = [
 ]
 
 export function AppShell() {
+  const { staff, signOut } = useAuth()
+
   return (
     <div className="min-h-screen p-6 md:p-10">
       <div className="max-w-[1280px] mx-auto grid grid-cols-[220px_1fr] rounded-2xl overflow-hidden border border-[var(--line)] min-h-[720px]">
@@ -19,7 +22,7 @@ export function AppShell() {
           <div className="font-[var(--font-display)] text-[20px] font-semibold px-2 mb-8">
             Sell<span className="text-[var(--violet-bright)]">aris</span>
           </div>
-          <nav className="flex flex-col gap-0.5">
+          <nav className="flex flex-col gap-0.5 flex-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -46,6 +49,20 @@ export function AppShell() {
               </NavLink>
             ))}
           </nav>
+          {staff && (
+            <div className="pt-3 border-t border-[var(--line)]">
+              <div className="px-2 mb-2">
+                <div className="text-[13px] font-medium truncate">{staff.name}</div>
+                <div className="text-[11px] text-[var(--ink-text-muted)] capitalize">{staff.role}</div>
+              </div>
+              <button
+                onClick={signOut}
+                className="w-full text-left px-2 py-1.5 rounded-[var(--radius-sm)] text-[12.5px] text-[var(--ink-text-muted)] hover:text-[var(--ink-text)] hover:bg-[var(--surface-2)]"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </aside>
 
         <main className="bg-[var(--surface)] p-7 overflow-auto">

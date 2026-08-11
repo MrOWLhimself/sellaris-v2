@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { supabase } from '@/lib/supabase'
-import { CURRENT_TENANT_ID, CURRENT_BRANCH_ID } from '@/lib/tenant'
+import { useAuth } from '@/context/AuthContext'
 
 const VAT_RATE = 0.075
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG')}`
 
 export default function POS() {
+  const { staff } = useAuth()
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,12 +30,12 @@ export default function POS() {
         supabase
           .from('categories')
           .select('id, name, sort_order')
-          .eq('tenant_id', CURRENT_TENANT_ID)
+          .eq('tenant_id', staff.tenant_id)
           .order('sort_order'),
         supabase
           .from('items')
           .select('id, name, price, stock, low_stock_threshold, category_id')
-          .eq('tenant_id', CURRENT_TENANT_ID)
+          .eq('tenant_id', staff.tenant_id)
           .order('name'),
       ])
 
@@ -51,7 +52,7 @@ export default function POS() {
 
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [staff.tenant_id])
 
   const categoryNames = useMemo(() => ['All', ...categories.map((c) => c.name)], [categories])
 
@@ -96,8 +97,8 @@ export default function POS() {
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({
-        tenant_id: CURRENT_TENANT_ID,
-        branch_id: CURRENT_BRANCH_ID,
+        tenant_id: staff.tenant_id,
+        branch_id: staff.branch_id,
         table_label: 'Table 5',
         status: 'sent_to_bar',
       })
@@ -132,7 +133,7 @@ export default function POS() {
     const { data: refreshed } = await supabase
       .from('items')
       .select('id, name, price, stock, low_stock_threshold, category_id')
-      .eq('tenant_id', CURRENT_TENANT_ID)
+      .eq('tenant_id', staff.tenant_id)
       .order('name')
     if (refreshed) setItems(refreshed)
   }

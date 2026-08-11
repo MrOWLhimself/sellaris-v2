@@ -3,6 +3,7 @@ import { MetricCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { RunningTotalStrip } from '@/components/ui/RunningTotalStrip'
 import { Table, TableHead, TableRow } from '@/components/ui/Table'
+import { useAuth } from '@/context/AuthContext'
 
 const orderColumns = [
   { key: 'item', label: 'Item', width: '2fr' },
@@ -26,15 +27,16 @@ const orders = [
 ]
 
 export default function Dashboard() {
+  const { staff } = useAuth()
   return (
     <>
       <div className="flex items-start justify-between pb-5 mb-6 border-b border-[var(--line)]">
         <div>
           <h1 className="font-[var(--font-display)] text-[22px] font-medium">
-            Good evening, Roger's Lounge
+            Good evening, {staff?.name || 'there'}
           </h1>
           <p className="text-[13px] text-[var(--ink-text-muted)] mt-1">
-            Tuesday, 11 August &mdash; Ijagun branch
+            Roger's Lounge &mdash; Ijagun branch
           </p>
         </div>
         <Button variant="primary">New sale</Button>
