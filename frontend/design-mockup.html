@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sellaris — Design System Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #12142B;
+    --surface: #1B1E3D;
+    --surface-2: #22254A;
+    --brass: #B8763A;
+    --brass-dim: #8A5A2C;
+    --indigo-soft: #5B6EA8;
+    --ivory: #F5F2ED;
+    --muted: #8D90A8;
+    --success: #3FA66B;
+    --line: rgba(245,242,237,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--ivory);
+    font-family: 'Inter', sans-serif;
+    padding: 40px 24px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+  .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* ===== Shell ===== */
+  .app {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    background: var(--surface);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    min-height: 640px;
+  }
+  .nav {
+    background: #0F1126;
+    padding: 24px 16px;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+  }
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 32px;
+    padding: 0 8px;
+  }
+  .brand span { color: var(--brass); }
+  .navitem {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .navitem.active {
+    background: rgba(184,118,58,0.14);
+    color: var(--ivory);
+    font-weight: 500;
+  }
+  .navitem.active::before {
+    content: '';
+    width: 3px; height: 16px;
+    background: var(--brass);
+    border-radius: 2px;
+    margin-left: -12px;
+    margin-right: 7px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .navitem.active .dot { display: none; }
+
+  .main { padding: 28px 32px; }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .greet { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* Running total strip — signature element */
+  .strip {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .strip .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .strip .num {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--brass);
+  }
+  .strip .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(63,166,107,0.18);
+  }
+
+  /* Metric grid */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .metric {
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-left: 2px solid var(--brass-dim);
+  }
+  .metric .ml { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .metric .mv { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; }
+  .metric .mv.up { color: var(--success); }
+  .metric .mv.up::before { content: '↑ '; font-size: 13px; }
+
+  /* Ledger table */
+  .ledger { background: var(--surface-2); border-radius: 10px; overflow: hidden; }
+  .lrow {
+    display: grid;
+    grid-template-columns: 1fr 100px 100px 90px;
+    padding: 12px 18px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+  .lrow:last-child { border-bottom: none; }
+  .lrow.head { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .lrow .item { font-weight: 500; }
+  .lrow .num { font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    width: fit-content;
+  }
+  .pill.settled { background: rgba(63,166,107,0.14); color: var(--success); }
+  .pill.pending { background: rgba(91,110,168,0.16); color: var(--indigo-soft); }
+
+  /* ===== POS Till ===== */
+  .till { display: grid; grid-template-columns: 1.4fr 1fr; gap: 0; }
+  .till-left { padding: 28px; border-right: 1px solid var(--line); }
+  .till-right { padding: 28px; background: var(--surface-2); display: flex; flex-direction: column; }
+  .grid-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .prod {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 12px;
+    font-size: 13px;
+  }
+  .prod .pname { font-weight: 500; margin-bottom: 6px; }
+  .prod .pprice { font-family: 'JetBrains Mono', monospace; color: var(--brass); font-size: 13px; }
+
+  .cart-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+  }
+  .cart-item .qty { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .cart-total {
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .cart-total .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .cart-total .grand {
+    display: flex; justify-content: space-between;
+    font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500;
+    margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line);
+  }
+  .btn {
+    background: var(--brass);
+    color: #1B1206;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    padding: 13px;
+    border-radius: 10px;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div>
+    <div class="label">Dashboard home</div>
+    <div class="app">
+      <div class="nav">
+        <div class="brand">Sell<span>aris</span></div>
+        <div class="navitem active">Dashboard</div>
+        <div class="navitem"><span class="dot"></span>POS / Till</div>
+        <div class="navitem"><span class="dot"></span>Inventory</div>
+        <div class="navitem"><span class="dot"></span>Bar flow</div>
+        <div class="navitem"><span class="dot"></span>Finance</div>
+        <div class="navitem"><span class="dot"></span>Customers</div>
+        <div class="navitem"><span class="dot"></span>Staff</div>
+        <div class="navitem"><span class="dot"></span>Settings</div>
+      </div>
+      <div class="main">
+        <div class="topbar">
+          <div>
+            <div class="greet">Good evening, Roger's Lounge</div>
+            <div class="sub">Tuesday, 11 August — Ijagun branch</div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <span class="pulse"></span>
+          <span class="tag">Today's till</span>
+          <span class="num">₦284,600</span>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="ml">Gross profit today</div>
+            <div class="mv up">₦96,200</div>
+          </div>
+          <div class="metric">
+            <div class="ml">Open bar tabs</div>
+            <div class="mv">7</div>
+          </div>
+          <div class="metric">
+            <div class="ml">Low stock alerts</div>
+            <div class="mv">3</div>
+          </div>
+        </div>
+
+        <div class="label">Recent orders</div>
+        <div class="ledger">
+          <div class="lrow head"><span>Item</span><span>Qty</span><span>Total</span><span>Status</span></div>
+          <div class="lrow"><span class="item">Amber Star (large)</span><span class="num">12</span><span class="num">₦18,000</span><span class="pill settled">Settled</span></div>
+          <div class="lrow"><span class="item">Peppersoup — goat</span><span class="num">4</span><span class="num">₦14,000</span><span class="pill settled">Settled</span></div>
+          <div class="lrow"><span class="item">Suya platter</span><span class="num">2</span><span class="num">₦7,000</span><span class="pill pending">Table 5</span></div>
+          <div class="lrow"><span class="item">Hennessy VS (shot)</span><span class="num">6</span><span class="num">₦21,000</span><span class="pill pending">Bar tab</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">POS / till</div>
+    <div class="app till">
+      <div class="till-left">
+        <div class="greet" style="font-size:18px">Table 5</div>
+        <div class="sub">4 seats — opened 8:42pm</div>
+        <div class="grid-items">
+          <div class="prod"><div class="pname">Amber Star</div><div class="pprice">₦1,500</div></div>
+          <div class="prod"><div class="pname">Peppersoup — goat</div><div class="pprice">₦3,500</div></div>
+          <div class="prod"><div class="pname">Suya platter</div><div class="pprice">₦3,500</div></div>
+          <div class="prod"><div class="pname">Hennessy VS</div><div class="pprice">₦3,500</div></div>
+          <div class="prod"><div class="pname">Chapman</div><div class="pprice">₦2,000</div></div>
+          <div class="prod"><div class="pname">Small chops</div><div class="pprice">₦4,000</div></div>
+        </div>
+      </div>
+      <div class="till-right">
+        <div class="label" style="margin-bottom:14px">Order</div>
+        <div class="cart-item"><span>Amber Star <span class="qty">×3</span></span><span>₦4,500</span></div>
+        <div class="cart-item"><span>Suya platter <span class="qty">×2</span></span><span>₦7,000</span></div>
+        <div class="cart-item"><span>Chapman <span class="qty">×4</span></span><span>₦8,000</span></div>
+        <div class="cart-total">
+          <div class="row"><span>Subtotal</span><span>₦19,500</span></div>
+          <div class="row"><span>VAT (7.5%)</span><span>₦1,463</span></div>
+          <div class="grand"><span>Total</span><span>₦20,963</span></div>
+        </div>
+        <div class="btn">Send to bar →</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
