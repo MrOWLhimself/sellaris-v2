@@ -25,6 +25,12 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 - ✅ No hardcoded business names anywhere in the UI — pulled from DB
 - ✅ Warehouse-first stock model: every business auto-gets a warehouse;
   purchases can only land there; stock reaches a store only via transfer
+- ✅ **Create Item form** — previously items could only be added via
+  direct SQL (a real gap). Now a proper form in Inventory → Items:
+  name, description, category, price, SKU, barcode, low-stock
+  threshold, "available for sale" and "track stock" toggles. Cost is
+  deliberately NOT an input here — verified a new item starts at
+  ₦0.00 cost and only rises via a real GRN, never manual entry.
 - ✅ **Transfer order screen** — staff can move stock warehouse → store
   from a real form, with a full history list
 - ✅ Purchase orders screen (plan a purchase, send to supplier) +

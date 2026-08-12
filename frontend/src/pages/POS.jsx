@@ -54,6 +54,7 @@ export default function POS() {
           .from('items')
           .select('id, name, price, low_stock_threshold, category_id')
           .eq('tenant_id', staff.tenant_id)
+          .eq('is_active', true)
           .order('name'),
         supabase
           .from('item_stock')
