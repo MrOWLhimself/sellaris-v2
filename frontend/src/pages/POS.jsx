@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+import { buildReceiptBytes, printViaBluetooth, printViaSerial } from '@/lib/printer'
 
 const VAT_RATE = 0.075
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG')}`
@@ -21,6 +22,8 @@ export default function POS() {
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerId, setCustomerId] = useState(null)
   const [customerLookupBusy, setCustomerLookupBusy] = useState(false)
+  const [printing, setPrinting] = useState(null)
+  const [printError, setPrintError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -193,6 +196,29 @@ export default function POS() {
     setCustomerId(null)
   }
 
+  async function handlePrint(method) {
+    setPrintError(null)
+    setPrinting(method)
+    try {
+      const bytes = buildReceiptBytes({
+        businessName: staff.businessName || 'Sellaris',
+        branchName: staff.branchName || '',
+        tableLabel: 'Table 5',
+        lines: cartLines,
+        subtotal,
+        vat,
+        total,
+        naira,
+      })
+      if (method === 'bluetooth') await printViaBluetooth(bytes)
+      else await printViaSerial(bytes)
+    } catch (e) {
+      setPrintError(e.message)
+    } finally {
+      setPrinting(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="h-full min-h-[500px] flex items-center justify-center text-[13px] text-[var(--ink-text-muted)]">
@@ -340,8 +366,19 @@ export default function POS() {
           </div>
 
           {sentToBar ? (
-            <div className="mt-4 bg-[var(--success-bg)] text-[var(--success)] text-[13px] rounded-[var(--radius)] px-4 py-3 text-center">
-              Sent to bar \u2014 saved to database
+            <div className="mt-4">
+              <div className="bg-[var(--success-bg)] text-[var(--success)] text-[13px] rounded-[var(--radius)] px-4 py-3 text-center mb-2">
+                Sent to bar \u2014 saved to database
+              </div>
+              {printError && <p className="text-[12px] text-[var(--danger)] mb-2">{printError}</p>}
+              <div className="flex gap-2">
+                <Button variant="secondary" className="flex-1" disabled={printing} onClick={() => handlePrint('bluetooth')}>
+                  {printing === 'bluetooth' ? 'Printing\u2026' : 'Print (Bluetooth)'}
+                </Button>
+                <Button variant="secondary" className="flex-1" disabled={printing} onClick={() => handlePrint('serial')}>
+                  {printing === 'serial' ? 'Printing\u2026' : 'Print (Cable)'}
+                </Button>
+              </div>
             </div>
           ) : (
             <Button

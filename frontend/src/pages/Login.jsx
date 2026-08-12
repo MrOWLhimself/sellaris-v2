@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -6,14 +7,12 @@ import { Input, Label } from '@/components/ui/Input'
 import { CURRENT_TENANT_ID } from '@/lib/tenant'
 
 export default function Login() {
-  const { session, staff, signIn, signUp, refreshStaff } = useAuth()
-  const [mode, setMode] = useState('signin') // signin | signup
+  const { session, staff, signIn, refreshStaff } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [info, setInfo] = useState(null)
   const [claimBusinessName, setClaimBusinessName] = useState(null)
 
   useEffect(() => {
@@ -30,24 +29,10 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
-    setInfo(null)
     setBusy(true)
-
-    const { error } = mode === 'signin'
-      ? await signIn(email, password)
-      : await signUp(email, password)
-
+    const { error } = await signIn(email, password)
     setBusy(false)
-
-    if (error) {
-      setError(error.message)
-      return
-    }
-
-    if (mode === 'signup') {
-      setInfo('Account created. If email confirmation is required, check your inbox, then sign in below.')
-      setMode('signin')
-    }
+    if (error) setError(error.message)
   }
 
   async function claimOwnership() {
@@ -65,7 +50,8 @@ export default function Login() {
     await refreshStaff()
   }
 
-  // Logged in but not yet linked to a business — first-run bootstrap
+  // Logged in but not yet linked to a business — pilot-tenant bootstrap
+  // path (Roger's Lounge specifically). New businesses use /signup instead.
   if (session && !staff) {
     return (
       <Shell>
@@ -88,11 +74,9 @@ export default function Login() {
   return (
     <Shell>
       <h1 className="font-[var(--font-display)] text-[20px] font-medium mb-1.5">
-        {mode === 'signin' ? 'Sign in to Sellaris' : 'Create your account'}
+        Sign in to Sellaris
       </h1>
-      <p className="text-[13px] text-[var(--ink-text-muted)] mb-6">
-        {mode === 'signin' ? 'Staff login' : 'Set a password to get started'}
-      </p>
+      <p className="text-[13px] text-[var(--ink-text-muted)] mb-6">Staff login</p>
 
       <form onSubmit={handleSubmit}>
         <Label>Email</Label>
@@ -100,7 +84,7 @@ export default function Login() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@rogerslounge.com"
+          placeholder="you@yourbusiness.com"
           required
           className="mb-4"
         />
@@ -116,19 +100,15 @@ export default function Login() {
         />
 
         {error && <p className="text-[13px] text-[var(--danger)] mb-4">{error}</p>}
-        {info && <p className="text-[13px] text-[var(--success)] mb-4">{info}</p>}
 
         <Button variant="primary" size="lg" className="w-full" disabled={busy} type="submit">
-          {busy ? 'Please wait\u2026' : mode === 'signin' ? 'Sign in' : 'Sign up'}
+          {busy ? 'Please wait\u2026' : 'Sign in'}
         </Button>
       </form>
 
-      <button
-        onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setInfo(null) }}
-        className="text-[13px] text-[var(--ink-text-muted)] hover:text-[var(--ink-text)] mt-4 w-full text-center"
-      >
-        {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-      </button>
+      <p className="text-[13px] text-[var(--ink-text-muted)] mt-4 text-center">
+        New business? <Link to="/signup" className="text-[var(--violet-bright)]">Start your free trial</Link>
+      </p>
     </Shell>
   )
 }

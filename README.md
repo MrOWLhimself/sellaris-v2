@@ -249,3 +249,17 @@ crashes instead.
 
 Backfilled the existing TicketPass NG owner account with Ijagun as
 its branch.
+
+## Getting Telegram notifications working (your action needed)
+
+1. Open Telegram, message **@BotFather**
+2. Send `/newbot`, follow the prompts to name it (e.g. "Sellaris Alerts")
+3. BotFather gives you a token like `123456:ABC-DEF1234...` \u2014 send
+   that to me (or store it somewhere I can access as a Supabase secret)
+4. I'll then build the Edge Function that actually sends messages using
+   that token \u2014 this is the one piece that genuinely can't be built
+   before the token exists.
+
+Each business owner then gets their own chat ID (message the bot,
+it replies with their ID) and pastes it into Settings \u2192 Telegram
+notifications.

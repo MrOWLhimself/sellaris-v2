@@ -22,6 +22,10 @@ import Payments from '@/pages/finance/Payments'
 import SalesSummary from '@/pages/finance/SalesSummary'
 import Customers from '@/pages/Customers'
 import PublicMenu from '@/pages/PublicMenu'
+import Signup from '@/pages/Signup'
+import Settings from '@/pages/Settings'
+import { AdminGuard } from '@/pages/admin/AdminGuard'
+import SuperAdmin from '@/pages/admin/SuperAdmin'
 
 export default function App() {
   return (
@@ -29,7 +33,9 @@ export default function App() {
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/menu/:slug" element={<PublicMenu />} />
+          <Route path="/admin" element={<AdminGuard><SuperAdmin /></AdminGuard>} />
           <Route
             element={
               <ProtectedRoute>
@@ -57,7 +63,7 @@ export default function App() {
             </Route>
             <Route path="/customers" element={<Customers />} />
             <Route path="/staff" element={<ComingSoon title="Staff" />} />
-            <Route path="/settings" element={<ComingSoon title="Settings" />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </HashRouter>

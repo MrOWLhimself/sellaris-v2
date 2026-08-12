@@ -101,20 +101,41 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   biggest single feature, deliberately last
 
 ## Phase 7 — Notifications & hardware
-- ⬜ Telegram bot — owner/manager notifications (new sale, low stock,
-  big order)
-- ⬜ Receipt printer support — mobile (Bluetooth or cable), desktop
-  (cable/USB)
+- \u2705 Telegram notification pipeline \u2014 database side ready
+  (`tenants.telegram_chat_id`, `get_low_stock_items()`), Settings page
+  has the field to configure it. **One manual step left**: creating
+  the actual Telegram bot via @BotFather requires a Telegram account
+  \u2014 that's on you, not something I can do. Once you have a bot
+  token, I'll build the Supabase Edge Function that actually sends
+  messages (the piece that needs the token to exist first).
+- \u2705 Receipt printer support \u2014 Web Bluetooth (mobile) and Web
+  Serial (desktop/cable) both wired into POS as real print buttons
+  after an order is sent to bar. Built against the standard ESC/POS
+  command set. **Untested against real hardware** \u2014 needs an actual
+  thermal printer to confirm the exact service/characteristic UUIDs
+  match (these vary by manufacturer); the code is structurally correct
+  but this is the honest gap until real hardware is in hand.
 
 ## Phase 8 — Platform-level
-- ⬜ Super Admin console (`/admin`) — platform KPIs, MRR/ARR, tenant
-  management, support tickets
-- ⬜ Business onboarding wizard (self-serve signup for new tenants,
-  not just the manual claim-ownership flow used for Roger's Lounge)
-- ⬜ Settings page — feature toggles matched against Loyverse's set
-  (shifts, time clock, kitchen printers, customer display, dining
-  options, low stock notifications, weight-embedded barcodes)
-- ⬜ PWA offline mode (works through power/data outages)
+- \u2705 Super Admin console (`/admin`) \u2014 platform-wide KPIs (total
+  businesses, active in 30 days, all-time GMV) and a business list.
+  Locked behind `AdminGuard`, checking a real `platform_admins` table
+  (not a hardcoded email) via a security-definer function. Your
+  TicketPass NG account is the first platform admin.
+- \u2705 Self-serve onboarding wizard (`/signup`) \u2014 a genuinely new
+  business can sign up, name their business, and get a tenant +
+  warehouse (auto) + main store + owner staff role, all in one atomic
+  database call. This is what makes Sellaris actually multi-tenant in
+  practice, not just in schema \u2014 previously the only way to get a
+  business onto the platform was me manually inserting rows.
+- \u2705 Settings page \u2014 feature toggles matched against the Loyverse
+  reference (shifts, time clock, kitchen printers, customer display,
+  dining options, low stock notifications, weight-embedded barcodes),
+  plus the Telegram chat ID field.
+- \u2b1c PWA offline mode \u2014 deliberately deferred. This is a
+  substantial standalone effort (service worker + IndexedDB queue +
+  background sync) and cramming it in alongside everything else this
+  round would mean doing it worse. Next dedicated session.
 
 ## Phase 9 — Launch prep
 - ✅ Deploy frontend to Vercel — live at https://sellaris-mu.vercel.app,
