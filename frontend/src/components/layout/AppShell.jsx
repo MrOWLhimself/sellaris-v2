@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { useOfflineSync } from '@/hooks/useOfflineSync'
+import { Badge } from '@/components/ui/Badge'
 
 const navItems = [
   { to: '/', label: 'Dashboard', end: true },
@@ -14,13 +16,35 @@ const navItems = [
 
 export function AppShell() {
   const { staff, signOut } = useAuth()
+  const { isOnline, pending, failedCount } = useOfflineSync()
 
   return (
     <div className="min-h-screen p-6 md:p-10">
+      {!isOnline && (
+        <div className="max-w-[1280px] mx-auto mb-3 bg-[var(--warning-bg)] text-[var(--warning)] text-[13px] rounded-[var(--radius)] px-4 py-2.5 flex items-center justify-between">
+          <span>You're offline \u2014 sales at the till will save locally and sync automatically once you're back online.</span>
+          {pending > 0 && <Badge tone="warning">{pending} pending</Badge>}
+        </div>
+      )}
+      {isOnline && pending > 0 && (
+        <div className="max-w-[1280px] mx-auto mb-3 bg-[var(--info-bg)] text-[var(--info)] text-[13px] rounded-[var(--radius)] px-4 py-2.5">
+          Syncing {pending} offline sale{pending > 1 ? 's' : ''}\u2026
+        </div>
+      )}
+      {failedCount > 0 && (
+        <div className="max-w-[1280px] mx-auto mb-3 bg-[var(--danger-bg)] text-[var(--danger)] text-[13px] rounded-[var(--radius)] px-4 py-2.5">
+          {failedCount} offline sale{failedCount > 1 ? 's' : ''} couldn't sync \u2014 check POS to review.
+        </div>
+      )}
+
       <div className="max-w-[1280px] mx-auto grid grid-cols-[220px_1fr] rounded-2xl overflow-hidden border border-[var(--line)] min-h-[720px]">
         <aside className="bg-[#0F0D1A] p-4 border-r border-[var(--line)] flex flex-col">
-          <div className="font-[var(--font-display)] text-[20px] font-semibold px-2 mb-8">
-            Sell<span className="text-[var(--violet-bright)]">aris</span>
+          <div className="font-[var(--font-display)] text-[20px] font-semibold px-2 mb-8 flex items-center justify-between">
+            <span>Sell<span className="text-[var(--violet-bright)]">aris</span></span>
+            <span
+              className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`}
+              title={isOnline ? 'Online' : 'Offline'}
+            />
           </div>
           <nav className="flex flex-col gap-0.5 flex-1">
             {navItems.map((item) => (

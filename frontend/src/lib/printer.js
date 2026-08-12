@@ -15,7 +15,7 @@ function textEncoder() {
 }
 
 // Builds a basic ESC/POS byte sequence for a receipt.
-export function buildReceiptBytes({ businessName, branchName, tableLabel, lines, subtotal, vat, total, naira }) {
+export function buildReceiptBytes({ businessName, branchName, tableLabel, lines, subtotal, vat, total, naira, header, footer }) {
   const enc = textEncoder()
   const chunks = []
 
@@ -26,6 +26,7 @@ export function buildReceiptBytes({ businessName, branchName, tableLabel, lines,
   raw(ESC, 0x61, 0x01) // center align
   push(`${businessName}\n`)
   push(`${branchName}\n`)
+  if (header) push(`${header}\n`)
   push('--------------------------------\n')
   raw(ESC, 0x61, 0x00) // left align
   push(`${tableLabel}\n\n`)
@@ -44,6 +45,7 @@ export function buildReceiptBytes({ businessName, branchName, tableLabel, lines,
   push('\n')
   raw(ESC, 0x61, 0x01) // center
   push('Thank you!\n')
+  if (footer) push(`${footer}\n`)
   push('Powered by Sellaris\n\n\n')
   raw(GS, 0x56, 0x00) // cut paper
 

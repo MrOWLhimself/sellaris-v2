@@ -162,21 +162,21 @@ instant a tenant is created (database trigger, not an app-level step —
 can't be skipped or forgotten). All purchases (GRNs) are enforced to land
 in the warehouse only; the database rejects a GRN aimed at a store branch
 outright. Stock only reaches a customer-facing store via an explicit
-**transfer order** (warehouse \u2192 store), which also enforces no
+**transfer order** (warehouse → store), which also enforces no
 negative stock on the warehouse side.
 
 This changed the stock model from a single tenant-wide `items.stock`
 number to a proper per-branch `item_stock` table (`branch_id`, `item_id`,
-`stock`) \u2014 required for warehouse vs. store to be meaningfully
+`stock`) — required for warehouse vs. store to be meaningfully
 different places. `items.stock` has been dropped entirely.
 
-Verified working end to end on Roger's Lounge: GRN \u2192 stock lands in
-warehouse only (direct-to-store GRN correctly rejected) \u2192 transfer
-order moves stock warehouse \u2192 Ijagun store \u2192 POS sale at Ijagun
+Verified working end to end on Roger's Lounge: GRN → stock lands in
+warehouse only (direct-to-store GRN correctly rejected) → transfer
+order moves stock warehouse → Ijagun store → POS sale at Ijagun
 correctly decrements Ijagun's stock, not the warehouse's.
 
 Not yet built: a UI for creating/completing transfer orders (currently
-only testable via SQL) \u2014 this is the next piece under the Inventory
+only testable via SQL) — this is the next piece under the Inventory
 module.
 
 ## Sharing a preview build
@@ -202,7 +202,7 @@ they already owned the business.
 Fixed by adding a direct, unambiguous policy: `user_id = auth.uid()`.
 No subquery, no self-reference. Since Postgres OR's multiple permissive
 policies together, the original colleagues-visibility policy is
-unaffected \u2014 this just guarantees your OWN row is always visible
+unaffected — this just guarantees your OWN row is always visible
 regardless of how the tenant-scoped policy resolves.
 
 Lesson for future RLS policies: prefer a direct match on `auth.uid()`
@@ -212,12 +212,12 @@ subquery seems more "correct" for a broader visibility rule.
 ## Correction to the earlier RLS fix
 
 The earlier fix (adding "staff can view own row directly") was
-necessary but NOT sufficient \u2014 the actual broken policy
+necessary but NOT sufficient — the actual broken policy
 ("staff can view colleagues") was still present and Postgres was
 throwing a hard error: "infinite recursion detected in policy for
 relation staff", confirmed directly from Postgres logs
 (`get_logs(service="postgres")`). Every staff query was returning
-500, not silently failing \u2014 which is why "sign out and back in"
+500, not silently failing — which is why "sign out and back in"
 didn't help; it wasn't a caching issue.
 
 **Real fix**: drop the recursive policy entirely.
@@ -225,12 +225,12 @@ didn't help; it wasn't a caching issue.
 check) is sufficient for everything the app currently does. If
 "view other staff at my business" is needed later (e.g. a Staff
 management page), implement it via a SECURITY DEFINER function
-instead of a self-referencing RLS policy \u2014 self-reference on the
+instead of a self-referencing RLS policy — self-reference on the
 same table is what causes this class of bug.
 
 Lesson: when a query fails with 500 (not 403/empty), always check
 Postgres logs directly (`get_logs`) for the real error before
-guessing \u2014 don't assume RLS silently hides rows; sometimes it
+guessing — don't assume RLS silently hides rows; sometimes it
 crashes instead.
 
 ## Bug fixed: owner accounts created with no branch assigned
@@ -240,10 +240,10 @@ crashes instead.
 "invalid input syntax for type uuid: null" error). Fixed two ways:
 
 1. The RPC now auto-assigns the tenant's main store branch to every
-   new owner \u2014 falls back to any non-warehouse branch if none is
+   new owner — falls back to any non-warehouse branch if none is
    flagged `is_main` yet.
 2. POS now checks for a missing `branch_id` up front and shows a
-   plain-language message instead of ever hitting a raw SQL error \u2014
+   plain-language message instead of ever hitting a raw SQL error —
    defensive UI matters even after the root cause is fixed, since a
    future staff-invite flow could hit the same gap.
 
@@ -254,12 +254,12 @@ its branch.
 
 1. Open Telegram, message **@BotFather**
 2. Send `/newbot`, follow the prompts to name it (e.g. "Sellaris Alerts")
-3. BotFather gives you a token like `123456:ABC-DEF1234...` \u2014 send
+3. BotFather gives you a token like `123456:ABC-DEF1234...` — send
    that to me (or store it somewhere I can access as a Supabase secret)
 4. I'll then build the Edge Function that actually sends messages using
-   that token \u2014 this is the one piece that genuinely can't be built
+   that token — this is the one piece that genuinely can't be built
    before the token exists.
 
 Each business owner then gets their own chat ID (message the bot,
-it replies with their ID) and pastes it into Settings \u2192 Telegram
+it replies with their ID) and pastes it into Settings → Telegram
 notifications.

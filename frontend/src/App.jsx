@@ -32,9 +32,18 @@ import Taxes from '@/pages/finance/reports/Taxes'
 import Customers from '@/pages/Customers'
 import PublicMenu from '@/pages/PublicMenu'
 import Signup from '@/pages/Signup'
-import Settings from '@/pages/Settings'
+import SettingsShell from '@/pages/settings/SettingsShell'
+import Features from '@/pages/settings/Features'
+import PaymentTypes from '@/pages/settings/PaymentTypes'
+import Loyalty from '@/pages/settings/Loyalty'
+import TaxesSettings from '@/pages/settings/TaxesSettings'
+import Receipt from '@/pages/settings/Receipt'
+import Stores from '@/pages/settings/Stores'
 import { AdminGuard } from '@/pages/admin/AdminGuard'
 import SuperAdmin from '@/pages/admin/SuperAdmin'
+import StaffShell from '@/pages/staff/StaffShell'
+import Employees from '@/pages/staff/Employees'
+import AccessRights from '@/pages/staff/AccessRights'
 
 export default function App() {
   return (
@@ -81,8 +90,18 @@ export default function App() {
               <Route path="profit-loss" element={<ProfitAndLoss />} />
             </Route>
             <Route path="/customers" element={<Customers />} />
-            <Route path="/staff" element={<ComingSoon title="Staff" />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/staff" element={<StaffShell />}>
+              <Route index element={<Employees />} />
+              <Route path="roles" element={<AccessRights />} />
+            </Route>
+            <Route path="/settings" element={<SettingsShell />}>
+              <Route index element={<Features />} />
+              <Route path="payment-types" element={<PaymentTypes />} />
+              <Route path="loyalty" element={<Loyalty />} />
+              <Route path="taxes" element={<TaxesSettings />} />
+              <Route path="receipt" element={<Receipt />} />
+              <Route path="stores" element={<Stores />} />
+            </Route>
           </Route>
         </Routes>
       </HashRouter>

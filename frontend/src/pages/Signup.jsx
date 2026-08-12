@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -15,7 +15,7 @@ const BUSINESS_TYPES = [
 ]
 
 export default function Signup() {
-  const { session, signUp, refreshStaff } = useAuth()
+  const { session, staff, signUp, refreshStaff } = useAuth()
   const navigate = useNavigate()
 
   const [step, setStep] = useState(session ? 'business' : 'account')
@@ -27,6 +27,16 @@ export default function Signup() {
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
   const [busy, setBusy] = useState(false)
+
+  // If this person was already attached to a business via a staff
+  // invitation (the auth.users trigger runs on signup), skip the
+  // "create a business" step entirely — they're joining one, not
+  // starting one.
+  useEffect(() => {
+    if (session && staff) {
+      navigate('/')
+    }
+  }, [session, staff, navigate])
 
   async function handleCreateAccount(e) {
     e.preventDefault()

@@ -4,12 +4,14 @@ import { Badge } from '@/components/ui/Badge'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { buildReceiptBytes, printViaBluetooth, printViaSerial } from '@/lib/printer'
+import { queueSale, getAllQueuedSales, retrySale, removeSale } from '@/lib/offlineQueue'
+import { syncPendingSales } from '@/lib/offlineSync'
 
-const VAT_RATE = 0.075
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG')}`
 
 export default function POS() {
   const { staff } = useAuth()
+  const [vatRate, setVatRate] = useState(0.075)
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +26,9 @@ export default function POS() {
   const [customerLookupBusy, setCustomerLookupBusy] = useState(false)
   const [printing, setPrinting] = useState(null)
   const [printError, setPrintError] = useState(null)
+  const [offlineQueued, setOfflineQueued] = useState(false)
+  const [queuedSales, setQueuedSales] = useState([])
+  const [retrying, setRetrying] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -38,7 +43,8 @@ export default function POS() {
         return
       }
 
-      const [{ data: cats, error: catErr }, { data: itms, error: itmErr }, { data: stockRows, error: stockErr }] = await Promise.all([
+      const [{ data: tenant }, { data: cats, error: catErr }, { data: itms, error: itmErr }, { data: stockRows, error: stockErr }] = await Promise.all([
+        supabase.from('tenants').select('vat_rate').eq('id', staff.tenant_id).maybeSingle(),
         supabase
           .from('categories')
           .select('id, name, sort_order')
@@ -57,6 +63,8 @@ export default function POS() {
 
       if (cancelled) return
 
+      if (tenant?.vat_rate != null) setVatRate(Number(tenant.vat_rate))
+
       if (catErr || itmErr || stockErr) {
         setError((catErr || itmErr || stockErr).message)
       } else {
@@ -70,6 +78,30 @@ export default function POS() {
     load()
     return () => { cancelled = true }
   }, [staff.tenant_id])
+
+  async function refreshQueuedSales() {
+    const all = await getAllQueuedSales()
+    setQueuedSales(all.filter((s) => s.branchId === staff.branch_id))
+  }
+
+  useEffect(() => {
+    refreshQueuedSales()
+    const interval = setInterval(refreshQueuedSales, 5000)
+    return () => clearInterval(interval)
+  }, [staff.branch_id])
+
+  async function handleRetrySale(localId) {
+    setRetrying(localId)
+    await retrySale(localId)
+    await syncPendingSales()
+    await refreshQueuedSales()
+    setRetrying(null)
+  }
+
+  async function handleDismissSale(localId) {
+    await removeSale(localId)
+    await refreshQueuedSales()
+  }
 
   const categoryNames = useMemo(() => ['All', ...categories.map((c) => c.name)], [categories])
 
@@ -103,7 +135,7 @@ export default function POS() {
   })
 
   const subtotal = cartLines.reduce((sum, l) => sum + l.lineTotal, 0)
-  const vat = Math.round(subtotal * VAT_RATE)
+  const vat = Math.round(subtotal * vatRate)
   const total = subtotal + vat
 
   async function findOrCreateCustomer() {
@@ -140,52 +172,90 @@ export default function POS() {
     setSaving(true)
     setError(null)
 
-    const linkedCustomerId = customerId || (await findOrCreateCustomer())
-
-    const { data: order, error: orderErr } = await supabase
-      .from('orders')
-      .insert({
-        tenant_id: staff.tenant_id,
-        branch_id: staff.branch_id,
-        table_label: 'Table 5',
-        status: 'sent_to_bar',
-        customer_id: linkedCustomerId,
+    // Offline: skip the network entirely, queue locally. Customer
+    // lookup/creation also needs the network, so it's deferred to sync time.
+    if (!navigator.onLine) {
+      await queueSale({
+        tenantId: staff.tenant_id,
+        branchId: staff.branch_id,
+        tableLabel: 'Table 5',
+        customerPhone: customerPhone.trim() || null,
+        cartLines,
+        subtotal,
+        vat,
+        total,
       })
-      .select('id')
-      .single()
-
-    if (orderErr) {
-      setError(orderErr.message)
       setSaving(false)
+      setSentToBar(true)
+      setOfflineQueued(true)
       return
     }
 
-    const orderItems = cartLines.map((l) => ({
-      order_id: order.id,
-      item_id: l.id,
-      qty: l.qty,
-      unit_price: l.price,
-      status: 'sent_to_bar',
-    }))
+    try {
+      const linkedCustomerId = customerId || (await findOrCreateCustomer())
 
-    const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
+      const { data: order, error: orderErr } = await supabase
+        .from('orders')
+        .insert({
+          tenant_id: staff.tenant_id,
+          branch_id: staff.branch_id,
+          table_label: 'Table 5',
+          status: 'sent_to_bar',
+          customer_id: linkedCustomerId,
+        })
+        .select('id')
+        .single()
 
-    setSaving(false)
+      if (orderErr) throw orderErr
 
-    if (itemsErr) {
-      setError(itemsErr.message)
-      return
-    }
+      const orderItems = cartLines.map((l) => ({
+        order_id: order.id,
+        item_id: l.id,
+        qty: l.qty,
+        unit_price: l.price,
+        status: 'sent_to_bar',
+      }))
 
-    setSentToBar(true)
-    // Refresh stock levels locally to reflect the DB trigger's deduction
-    const { data: refreshedStock } = await supabase
-      .from('item_stock')
-      .select('item_id, stock')
-      .eq('branch_id', staff.branch_id)
-    if (refreshedStock) {
-      const stockByItem = Object.fromEntries(refreshedStock.map((s) => [s.item_id, s.stock]))
-      setItems((prev) => prev.map((i) => ({ ...i, stock: stockByItem[i.id] ?? i.stock })))
+      const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
+      if (itemsErr) throw itemsErr
+
+      setSaving(false)
+      setSentToBar(true)
+      setOfflineQueued(false)
+
+      // Refresh stock levels locally to reflect the DB trigger's deduction
+      const { data: refreshedStock } = await supabase
+        .from('item_stock')
+        .select('item_id, stock')
+        .eq('branch_id', staff.branch_id)
+      if (refreshedStock) {
+        const stockByItem = Object.fromEntries(refreshedStock.map((s) => [s.item_id, s.stock]))
+        setItems((prev) => prev.map((i) => ({ ...i, stock: stockByItem[i.id] ?? i.stock })))
+      }
+    } catch (e) {
+      // A genuine business-rule error (e.g. insufficient stock) should
+      // surface normally. A network-level failure (fetch couldn't even
+      // reach the server) should fall back to the offline queue instead
+      // of just failing — the connection may have dropped mid-request.
+      const looksLikeNetworkFailure = e.message?.toLowerCase().includes('fetch') || !navigator.onLine
+      if (looksLikeNetworkFailure) {
+        await queueSale({
+          tenantId: staff.tenant_id,
+          branchId: staff.branch_id,
+          tableLabel: 'Table 5',
+          customerPhone: customerPhone.trim() || null,
+          cartLines,
+          subtotal,
+          vat,
+          total,
+        })
+        setSaving(false)
+        setSentToBar(true)
+        setOfflineQueued(true)
+      } else {
+        setError(e.message)
+        setSaving(false)
+      }
     }
   }
 
@@ -200,6 +270,12 @@ export default function POS() {
     setPrintError(null)
     setPrinting(method)
     try {
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('receipt_header, receipt_footer')
+        .eq('id', staff.tenant_id)
+        .maybeSingle()
+
       const bytes = buildReceiptBytes({
         businessName: staff.businessName || 'Sellaris',
         branchName: staff.branchName || '',
@@ -209,6 +285,8 @@ export default function POS() {
         vat,
         total,
         naira,
+        header: tenant?.receipt_header,
+        footer: tenant?.receipt_footer,
       })
       if (method === 'bluetooth') await printViaBluetooth(bytes)
       else await printViaSerial(bytes)
@@ -357,7 +435,7 @@ export default function POS() {
             <span className="font-[var(--font-mono)]">{naira(subtotal)}</span>
           </div>
           <div className="flex justify-between text-[13px] text-[var(--ink-text-muted)] mb-2">
-            <span>VAT (7.5%)</span>
+            <span>VAT ({(vatRate * 100).toFixed(1)}%)</span>
             <span className="font-[var(--font-mono)]">{naira(vat)}</span>
           </div>
           <div className="flex justify-between font-[var(--font-display)] text-[24px] font-medium mt-2 pt-2.5 border-t border-[var(--line)]">
@@ -367,8 +445,8 @@ export default function POS() {
 
           {sentToBar ? (
             <div className="mt-4">
-              <div className="bg-[var(--success-bg)] text-[var(--success)] text-[13px] rounded-[var(--radius)] px-4 py-3 text-center mb-2">
-                Sent to bar \u2014 saved to database
+              <div className={`text-[13px] rounded-[var(--radius)] px-4 py-3 text-center mb-2 ${offlineQueued ? 'bg-[var(--warning-bg)] text-[var(--warning)]' : 'bg-[var(--success-bg)] text-[var(--success)]'}`}>
+                {offlineQueued ? 'Saved offline \u2014 will sync when back online' : 'Sent to bar \u2014 saved to database'}
               </div>
               {printError && <p className="text-[12px] text-[var(--danger)] mb-2">{printError}</p>}
               <div className="flex gap-2">
@@ -396,6 +474,35 @@ export default function POS() {
             <Button variant="ghost" size="sm" className="w-full mt-2" onClick={clearOrder}>
               Clear order
             </Button>
+          )}
+
+          {queuedSales.length > 0 && (
+            <div className="mt-5 pt-4 border-t border-[var(--line)]">
+              <div className="text-[11px] uppercase tracking-wide text-[var(--ink-text-muted)] mb-2">
+                Offline queue ({queuedSales.length})
+              </div>
+              {queuedSales.map((s) => (
+                <div key={s.localId} className="bg-[var(--surface-3)] rounded-[var(--radius-sm)] p-3 mb-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[12px] font-[var(--font-mono)]">{naira(s.total)}</span>
+                    <Badge tone={s.status === 'failed' ? 'danger' : 'warning'}>
+                      {s.status === 'failed' ? 'Failed' : 'Pending sync'}
+                    </Badge>
+                  </div>
+                  {s.errorMessage && (
+                    <p className="text-[11px] text-[var(--danger)] mb-2">{s.errorMessage}</p>
+                  )}
+                  {s.status === 'failed' && (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="secondary" disabled={retrying === s.localId} onClick={() => handleRetrySale(s.localId)}>
+                        {retrying === s.localId ? 'Retrying\u2026' : 'Retry'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDismissSale(s.localId)}>Discard</Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
