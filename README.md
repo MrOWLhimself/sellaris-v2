@@ -181,16 +181,10 @@ module.
 
 ## Sharing a preview build
 
-The real app uses `vite.config.js` (multi-file build, for Vercel).
-For sharing a standalone preview file with the person, use
-`vite.config.preview.js` instead — it bundles everything (JS, CSS)
-into ONE self-contained HTML file via `vite-plugin-singlefile`, since
-multi-file builds don't survive being shared as a single artifact.
-
-```
-npx vite build --config vite.config.preview.js
-```
-
-Output goes to `preview-build/index.html` — copy that single file to
-outputs. Verified working via both a local server and direct `file://`
-open (tested with Playwright headless browser before sharing).
+Build with `npx vite build --base=./ --outDir dist-preview` and copy
+the whole `dist-preview` folder (index.html + assets) to outputs — this
+is the method actually verified working via real interactive testing
+(POS, Inventory) in earlier sessions. A single-file inlined build
+(`vite-plugin-singlefile`) was tried and reverted — it broke
+`import.meta.url` resolution inside the preview sandbox and threw
+"Invalid URL" errors. Stick with the multi-file relative-path build.
