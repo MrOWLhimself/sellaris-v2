@@ -208,3 +208,27 @@ regardless of how the tenant-scoped policy resolves.
 Lesson for future RLS policies: prefer a direct match on `auth.uid()`
 wherever possible over a subquery on the same table, even when a
 subquery seems more "correct" for a broader visibility rule.
+
+## Correction to the earlier RLS fix
+
+The earlier fix (adding "staff can view own row directly") was
+necessary but NOT sufficient \u2014 the actual broken policy
+("staff can view colleagues") was still present and Postgres was
+throwing a hard error: "infinite recursion detected in policy for
+relation staff", confirmed directly from Postgres logs
+(`get_logs(service="postgres")`). Every staff query was returning
+500, not silently failing \u2014 which is why "sign out and back in"
+didn't help; it wasn't a caching issue.
+
+**Real fix**: drop the recursive policy entirely.
+`staff can view own row directly` (a plain `user_id = auth.uid()`
+check) is sufficient for everything the app currently does. If
+"view other staff at my business" is needed later (e.g. a Staff
+management page), implement it via a SECURITY DEFINER function
+instead of a self-referencing RLS policy \u2014 self-reference on the
+same table is what causes this class of bug.
+
+Lesson: when a query fails with 500 (not 403/empty), always check
+Postgres logs directly (`get_logs`) for the real error before
+guessing \u2014 don't assume RLS silently hides rows; sometimes it
+crashes instead.
