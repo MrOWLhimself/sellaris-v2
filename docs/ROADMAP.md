@@ -68,9 +68,18 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   after item costs change later via new GRNs
 - ⬜ Nigerian tax engine beyond VAT (PAYE needs a payroll module, not
   built)
-- ⬜ Full P&L report (needs expense tracking, not built)
-- ⬜ Refunds/discounts (not tracked yet \u2014 sales summary currently
-  shows gross = net, noted honestly in the UI itself)
+- ✅ Full P&L report \u2014 Revenue \u2192 Refunds \u2192 Net revenue \u2192 COGS
+  \u2192 Gross profit \u2192 Expenses (by category) \u2192 Net profit, date-range
+  filterable, at Finance \u2192 Profit & Loss
+- ✅ Refunds \u2014 issued against any settled order, tracked in their own
+  auditable table (not a negative payment), correctly subtracted in
+  both Sales Summary and P&L
+- ✅ Discounts \u2014 flat or percentage, applied at settlement; the
+  payment-confirmation trigger now correctly checks against the
+  discounted total, not the full price
+- ✅ Expense tracking \u2014 categorized (Rent, Salaries, Utilities,
+  Maintenance, Marketing, Other \u2014 auto-seeded for every new business),
+  with a running list and total
 
 ## Phase 5 — Customers & Loyalty
 - ✅ Customer database (name, phone, email, notes)

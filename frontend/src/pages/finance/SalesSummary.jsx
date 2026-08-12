@@ -23,22 +23,35 @@ export default function SalesSummary() {
     let cancelled = false
     async function load() {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('order_items')
-        .select('qty, unit_price, unit_cost, created_at, orders!inner(tenant_id)')
-        .eq('orders.tenant_id', staff.tenant_id)
-        .gte('created_at', `${from}T00:00:00`)
-        .lte('created_at', `${to}T23:59:59`)
+      const [{ data, error }, { data: refunds, error: refErr }] = await Promise.all([
+        supabase
+          .from('order_items')
+          .select('qty, unit_price, unit_cost, created_at, orders!inner(tenant_id)')
+          .eq('orders.tenant_id', staff.tenant_id)
+          .gte('created_at', `${from}T00:00:00`)
+          .lte('created_at', `${to}T23:59:59`),
+        supabase
+          .from('refunds')
+          .select('amount, created_at')
+          .eq('tenant_id', staff.tenant_id)
+          .gte('created_at', `${from}T00:00:00`)
+          .lte('created_at', `${to}T23:59:59`),
+      ])
 
       if (cancelled) return
-      if (error) { setError(error.message); setLoading(false); return }
+      if (error || refErr) { setError((error || refErr).message); setLoading(false); return }
 
       const byDate = {}
       for (const r of data || []) {
         const date = r.created_at.slice(0, 10)
-        if (!byDate[date]) byDate[date] = { grossSales: 0, costOfGoods: 0 }
+        if (!byDate[date]) byDate[date] = { grossSales: 0, costOfGoods: 0, refunds: 0 }
         byDate[date].grossSales += r.qty * r.unit_price
         byDate[date].costOfGoods += r.qty * (r.unit_cost || 0)
+      }
+      for (const r of refunds || []) {
+        const date = r.created_at.slice(0, 10)
+        if (!byDate[date]) byDate[date] = { grossSales: 0, costOfGoods: 0, refunds: 0 }
+        byDate[date].refunds += Number(r.amount)
       }
 
       const sortedDates = Object.keys(byDate).sort()
@@ -46,8 +59,10 @@ export default function SalesSummary() {
         sortedDates.map((date) => ({
           date,
           grossSales: byDate[date].grossSales,
+          refunds: byDate[date].refunds,
+          netSales: byDate[date].grossSales - byDate[date].refunds,
           costOfGoods: byDate[date].costOfGoods,
-          grossProfit: byDate[date].grossSales - byDate[date].costOfGoods,
+          grossProfit: byDate[date].grossSales - byDate[date].refunds - byDate[date].costOfGoods,
         }))
       )
       setLoading(false)
@@ -62,10 +77,12 @@ export default function SalesSummary() {
   const totals = rows.reduce(
     (acc, r) => ({
       grossSales: acc.grossSales + r.grossSales,
+      refunds: acc.refunds + r.refunds,
+      netSales: acc.netSales + r.netSales,
       costOfGoods: acc.costOfGoods + r.costOfGoods,
       grossProfit: acc.grossProfit + r.grossProfit,
     }),
-    { grossSales: 0, costOfGoods: 0, grossProfit: 0 }
+    { grossSales: 0, refunds: 0, netSales: 0, costOfGoods: 0, grossProfit: 0 }
   )
 
   const maxSales = Math.max(...rows.map((r) => r.grossSales), 1)
@@ -93,15 +110,12 @@ export default function SalesSummary() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3.5 mb-6">
+      <div className="grid grid-cols-5 gap-3 mb-6">
         <MetricCard label="Gross sales" value={naira(totals.grossSales)} accent />
+        <MetricCard label="Refunds" value={naira(totals.refunds)} accent />
+        <MetricCard label="Net sales" value={naira(totals.netSales)} accent />
         <MetricCard label="Cost of goods" value={naira(totals.costOfGoods)} accent />
         <MetricCard label="Gross profit" value={naira(totals.grossProfit)} trend="up" accent />
-        <MetricCard
-          label="Margin"
-          value={`${totals.grossSales > 0 ? Math.round((totals.grossProfit / totals.grossSales) * 100) : 0}%`}
-          accent
-        />
       </div>
 
       {rows.length === 0 ? (
@@ -125,16 +139,17 @@ export default function SalesSummary() {
           </div>
 
           <div className="bg-[var(--surface-2)] rounded-[var(--radius)] overflow-hidden overflow-x-auto">
-            <div className="grid grid-cols-4 px-4.5 py-2.5 text-[11px] uppercase tracking-wide text-[var(--ink-text-muted)] border-b border-[var(--line)] min-w-[560px]">
+            <div className="grid grid-cols-5 px-4.5 py-2.5 text-[11px] uppercase tracking-wide text-[var(--ink-text-muted)] border-b border-[var(--line)] min-w-[640px]">
               <span>Date</span>
               <span className="text-right">Gross sales</span>
-              <span className="text-right">Cost of goods</span>
+              <span className="text-right">Refunds</span>
+              <span className="text-right">Net sales</span>
               <span className="text-right">Gross profit</span>
             </div>
             {rows.slice().reverse().map((r, i) => (
               <div
                 key={r.date}
-                className={`grid grid-cols-4 px-4.5 py-2.5 text-[13px] items-center min-w-[560px] ${
+                className={`grid grid-cols-5 px-4.5 py-2.5 text-[13px] items-center min-w-[640px] ${
                   i !== rows.length - 1 ? 'border-b border-[var(--line)]' : ''
                 }`}
               >
@@ -142,7 +157,8 @@ export default function SalesSummary() {
                   {new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                 </span>
                 <span className="text-right font-[var(--font-mono)]">{naira(r.grossSales)}</span>
-                <span className="text-right font-[var(--font-mono)] text-[var(--ink-text-muted)]">{naira(r.costOfGoods)}</span>
+                <span className="text-right font-[var(--font-mono)] text-[var(--danger)]">{r.refunds > 0 ? `-${naira(r.refunds)}` : naira(0)}</span>
+                <span className="text-right font-[var(--font-mono)]">{naira(r.netSales)}</span>
                 <span className="text-right font-[var(--font-mono)] text-[var(--success)]">{naira(r.grossProfit)}</span>
               </div>
             ))}
@@ -151,8 +167,8 @@ export default function SalesSummary() {
       )}
 
       <p className="text-[12px] text-[var(--ink-text-faint)] mt-4">
-        Refunds and discounts aren't tracked yet \u2014 gross sales currently equals net sales. Worth
-        adding once the refund workflow exists.
+        Discounts affect what a customer is charged at settlement but aren't broken out as a
+        separate line here yet \u2014 they're folded into net sales. Refunds are tracked and shown above.
       </p>
     </div>
   )

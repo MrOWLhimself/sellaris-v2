@@ -20,6 +20,8 @@ import BarFlow from '@/pages/BarFlow'
 import FinanceShell from '@/pages/finance/FinanceShell'
 import Payments from '@/pages/finance/Payments'
 import SalesSummary from '@/pages/finance/SalesSummary'
+import Expenses from '@/pages/finance/Expenses'
+import ProfitAndLoss from '@/pages/finance/ProfitAndLoss'
 import Customers from '@/pages/Customers'
 import PublicMenu from '@/pages/PublicMenu'
 import Signup from '@/pages/Signup'
@@ -60,6 +62,8 @@ export default function App() {
             <Route path="/finance" element={<FinanceShell />}>
               <Route index element={<Payments />} />
               <Route path="sales-summary" element={<SalesSummary />} />
+              <Route path="expenses" element={<Expenses />} />
+              <Route path="profit-loss" element={<ProfitAndLoss />} />
             </Route>
             <Route path="/customers" element={<Customers />} />
             <Route path="/staff" element={<ComingSoon title="Staff" />} />
