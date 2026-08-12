@@ -162,7 +162,7 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   Invite-by-email flow: an owner invites an email address, and that
   person is automatically attached as staff the moment they sign up
   with a matching email — no manual admin user creation needed.
-- ⬜ PWA offline mode — built with `vite-plugin-pwa` (app-shell
+- ✅ PWA offline mode — built with `vite-plugin-pwa` (app-shell
   precaching, service worker, branded manifest + icons) + a hand-built
   IndexedDB sync queue (via `idb`) specifically for POS sales. Verified
   with real tests, not just "it built": (1) service worker actually
@@ -172,9 +172,14 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   `online` event + a 30s fallback poll), and a sale that fails to sync
   (e.g. stock ran out from other sales while offline) is marked
   visible-for-review in POS, not silently dropped.
-  **Not yet live-tested**: the actual POS offline-sale flow needs
-  testing by a real logged-in user (can't simulate a full authenticated
-  session from this sandbox).
+- ✅ PIN-based quick login per device — one real email/password login
+  per staff per till, then instant PIN switching after that (cached
+  session, not a server-side auth factor — see README for the real
+  mechanism). Handles refresh-token rotation correctly.
+  **Neither PWA-offline-sales nor PIN-login has been exercised by a
+  real logged-in user yet** — both need live testing, since neither
+  can be simulated from this sandbox (no authenticated session
+  possible here).
 
 ## Phase 9 — Launch prep
 - ✅ Deploy frontend to Vercel — live at https://sellaris-mu.vercel.app,
