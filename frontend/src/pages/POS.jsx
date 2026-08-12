@@ -26,6 +26,12 @@ export default function POS() {
       setLoading(true)
       setError(null)
 
+      if (!staff.branch_id) {
+        setError('No branch assigned to your account yet. Ask an owner to assign you to a store.')
+        setLoading(false)
+        return
+      }
+
       const [{ data: cats, error: catErr }, { data: itms, error: itmErr }, { data: stockRows, error: stockErr }] = await Promise.all([
         supabase
           .from('categories')
@@ -162,10 +168,6 @@ export default function POS() {
     return (
       <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center gap-2">
         <p className="text-[13px] text-[var(--danger)] max-w-[360px]">{error}</p>
-        <p className="text-[12px] text-[var(--ink-text-muted)] max-w-[360px]">
-          If this says permission denied, it's because row-level security is scoped to logged-in
-          staff and there's no auth session yet \u2014 that's next on the build.
-        </p>
       </div>
     )
   }

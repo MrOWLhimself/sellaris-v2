@@ -232,3 +232,20 @@ Lesson: when a query fails with 500 (not 403/empty), always check
 Postgres logs directly (`get_logs`) for the real error before
 guessing \u2014 don't assume RLS silently hides rows; sometimes it
 crashes instead.
+
+## Bug fixed: owner accounts created with no branch assigned
+
+`claim_tenant_owner` was creating the owner's staff row without a
+`branch_id`, which broke every branch-scoped screen (POS threw a raw
+"invalid input syntax for type uuid: null" error). Fixed two ways:
+
+1. The RPC now auto-assigns the tenant's main store branch to every
+   new owner \u2014 falls back to any non-warehouse branch if none is
+   flagged `is_main` yet.
+2. POS now checks for a missing `branch_id` up front and shows a
+   plain-language message instead of ever hitting a raw SQL error \u2014
+   defensive UI matters even after the root cause is fixed, since a
+   future staff-invite flow could hit the same gap.
+
+Backfilled the existing TicketPass NG owner account with Ijagun as
+its branch.
