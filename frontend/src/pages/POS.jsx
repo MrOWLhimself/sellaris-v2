@@ -26,7 +26,7 @@ export default function POS() {
       setLoading(true)
       setError(null)
 
-      const [{ data: cats, error: catErr }, { data: itms, error: itmErr }] = await Promise.all([
+      const [{ data: cats, error: catErr }, { data: itms, error: itmErr }, { data: stockRows, error: stockErr }] = await Promise.all([
         supabase
           .from('categories')
           .select('id, name, sort_order')
@@ -34,18 +34,23 @@ export default function POS() {
           .order('sort_order'),
         supabase
           .from('items')
-          .select('id, name, price, stock, low_stock_threshold, category_id')
+          .select('id, name, price, low_stock_threshold, category_id')
           .eq('tenant_id', staff.tenant_id)
           .order('name'),
+        supabase
+          .from('item_stock')
+          .select('item_id, stock')
+          .eq('branch_id', staff.branch_id),
       ])
 
       if (cancelled) return
 
-      if (catErr || itmErr) {
-        setError((catErr || itmErr).message)
+      if (catErr || itmErr || stockErr) {
+        setError((catErr || itmErr || stockErr).message)
       } else {
+        const stockByItem = Object.fromEntries((stockRows || []).map((s) => [s.item_id, s.stock]))
         setCategories(cats || [])
-        setItems(itms || [])
+        setItems((itms || []).map((i) => ({ ...i, stock: stockByItem[i.id] ?? 0 })))
       }
       setLoading(false)
     }
@@ -130,12 +135,14 @@ export default function POS() {
 
     setSentToBar(true)
     // Refresh stock levels locally to reflect the DB trigger's deduction
-    const { data: refreshed } = await supabase
-      .from('items')
-      .select('id, name, price, stock, low_stock_threshold, category_id')
-      .eq('tenant_id', staff.tenant_id)
-      .order('name')
-    if (refreshed) setItems(refreshed)
+    const { data: refreshedStock } = await supabase
+      .from('item_stock')
+      .select('item_id, stock')
+      .eq('branch_id', staff.branch_id)
+    if (refreshedStock) {
+      const stockByItem = Object.fromEntries(refreshedStock.map((s) => [s.item_id, s.stock]))
+      setItems((prev) => prev.map((i) => ({ ...i, stock: stockByItem[i.id] ?? i.stock })))
+    }
   }
 
   function clearOrder() {

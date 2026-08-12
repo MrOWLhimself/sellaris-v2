@@ -154,3 +154,27 @@ branch names shown on screen are pulled live from the database via
 `useAuth().staff.businessName` / `.branchName`, never a string literal.
 This was fixed across Dashboard, POS, and the login/claim screen — worth
 re-checking on every new page as it's built.
+
+## Warehouse-first inventory model
+
+Every business gets exactly one **warehouse** branch, auto-created the
+instant a tenant is created (database trigger, not an app-level step —
+can't be skipped or forgotten). All purchases (GRNs) are enforced to land
+in the warehouse only; the database rejects a GRN aimed at a store branch
+outright. Stock only reaches a customer-facing store via an explicit
+**transfer order** (warehouse \u2192 store), which also enforces no
+negative stock on the warehouse side.
+
+This changed the stock model from a single tenant-wide `items.stock`
+number to a proper per-branch `item_stock` table (`branch_id`, `item_id`,
+`stock`) \u2014 required for warehouse vs. store to be meaningfully
+different places. `items.stock` has been dropped entirely.
+
+Verified working end to end on Roger's Lounge: GRN \u2192 stock lands in
+warehouse only (direct-to-store GRN correctly rejected) \u2192 transfer
+order moves stock warehouse \u2192 Ijagun store \u2192 POS sale at Ijagun
+correctly decrements Ijagun's stock, not the warehouse's.
+
+Not yet built: a UI for creating/completing transfer orders (currently
+only testable via SQL) \u2014 this is the next piece under the Inventory
+module.
