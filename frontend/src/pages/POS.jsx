@@ -167,7 +167,9 @@ export default function POS() {
     <div className="grid grid-cols-[1.4fr_1fr] gap-0 -m-7 min-h-[720px]">
       <div className="p-7 border-r border-[var(--line)]">
         <h1 className="font-[var(--font-display)] text-[18px] font-medium">Table 5</h1>
-        <p className="text-[13px] text-[var(--ink-text-muted)] mt-1 mb-5">Ijagun branch</p>
+        <p className="text-[13px] text-[var(--ink-text-muted)] mt-1 mb-5">
+          {staff.branchName || 'Main branch'}
+        </p>
 
         <div className="flex gap-2 mb-5 flex-wrap">
           {categoryNames.map((cat) => (

@@ -36,7 +36,8 @@ export default function Dashboard() {
             Good evening, {staff?.name || 'there'}
           </h1>
           <p className="text-[13px] text-[var(--ink-text-muted)] mt-1">
-            Roger's Lounge &mdash; Ijagun branch
+            {staff?.businessName || 'Your business'}
+            {staff?.branchName ? ` \u2014 ${staff.branchName}` : ''}
           </p>
         </div>
         <Button variant="primary">New sale</Button>

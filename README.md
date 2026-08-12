@@ -144,3 +144,13 @@ exactly and then go further with the cost data Loyverse can't show
 - Security advisors: zero unintended warnings (one expected warning
   remains on `claim_tenant_owner` being callable by any authenticated
   user — that's by design, the function's own logic is the real gate).
+
+## Platform naming rule (important)
+
+Sellaris is a multi-tenant platform for ANY business — Roger's Lounge is
+the pilot/test tenant used during development, nothing more. It must
+never appear as hardcoded UI text anywhere in the app. All business and
+branch names shown on screen are pulled live from the database via
+`useAuth().staff.businessName` / `.branchName`, never a string literal.
+This was fixed across Dashboard, POS, and the login/claim screen — worth
+re-checking on every new page as it's built.

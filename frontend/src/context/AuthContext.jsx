@@ -15,10 +15,20 @@ export function AuthProvider({ children }) {
     }
     const { data } = await supabase
       .from('staff')
-      .select('id, tenant_id, branch_id, name, role')
+      .select('id, tenant_id, branch_id, name, role, tenants(name), branches(name)')
       .eq('user_id', userId)
       .maybeSingle()
-    setStaff(data || null)
+
+    if (!data) {
+      setStaff(null)
+      return
+    }
+
+    setStaff({
+      ...data,
+      businessName: data.tenants?.name || null,
+      branchName: data.branches?.name || null,
+    })
   }
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -14,6 +14,18 @@ export default function Login() {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [info, setInfo] = useState(null)
+  const [claimBusinessName, setClaimBusinessName] = useState(null)
+
+  useEffect(() => {
+    if (session && !staff) {
+      supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', CURRENT_TENANT_ID)
+        .maybeSingle()
+        .then(({ data }) => setClaimBusinessName(data?.name || null))
+    }
+  }, [session, staff])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -58,7 +70,7 @@ export default function Login() {
     return (
       <Shell>
         <h1 className="font-[var(--font-display)] text-[20px] font-medium mb-1.5">
-          Set up Roger's Lounge
+          Set up {claimBusinessName || 'your business'}
         </h1>
         <p className="text-[13px] text-[var(--ink-text-muted)] mb-6">
           You're signed in as {session.user.email}. Claim this business as its owner to continue.
@@ -79,7 +91,7 @@ export default function Login() {
         {mode === 'signin' ? 'Sign in to Sellaris' : 'Create your account'}
       </h1>
       <p className="text-[13px] text-[var(--ink-text-muted)] mb-6">
-        {mode === 'signin' ? "Roger's Lounge staff login" : 'Set a password to get started'}
+        {mode === 'signin' ? 'Staff login' : 'Set a password to get started'}
       </p>
 
       <form onSubmit={handleSubmit}>
