@@ -52,7 +52,7 @@ export default function POS() {
           .order('sort_order'),
         supabase
           .from('items')
-          .select('id, name, price, low_stock_threshold, category_id')
+          .select('id, name, price, low_stock_threshold, category_id, representation_type, color, image_url')
           .eq('tenant_id', staff.tenant_id)
           .eq('is_active', true)
           .order('name'),
@@ -344,27 +344,41 @@ export default function POS() {
           <div className="grid grid-cols-3 gap-2.5">
             {visibleItems.map((item) => {
               const outOfStock = item.stock <= 0
+              const hasImage = item.representation_type === 'image' && item.image_url
+              const swatchColor = item.color || '#5B3FA6'
               return (
                 <button
                   key={item.id}
                   onClick={() => !outOfStock && addItem(item)}
                   disabled={outOfStock}
-                  className={`text-left bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--radius)] p-3.5 transition-colors ${
+                  className={`text-left bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--radius)] overflow-hidden transition-colors ${
                     outOfStock
                       ? 'opacity-40 cursor-not-allowed'
                       : 'hover:border-[var(--violet-bright)]'
                   }`}
                 >
-                  <div className="text-[13px] font-medium mb-1.5">{item.name}</div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-[var(--font-mono)] text-[13px] text-[var(--gold)]">
-                      {naira(item.price)}
-                    </span>
-                    {outOfStock ? (
-                      <Badge tone="danger">Out of stock</Badge>
-                    ) : item.stock <= item.low_stock_threshold ? (
-                      <Badge tone="warning">{item.stock} left</Badge>
-                    ) : null}
+                  {hasImage ? (
+                    <img src={item.image_url} alt="" className="w-full h-16 object-cover" />
+                  ) : (
+                    <div
+                      className="w-full h-16 flex items-center justify-center text-[20px] font-[var(--font-display)] font-medium text-white/90"
+                      style={{ backgroundColor: swatchColor }}
+                    >
+                      {item.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <div className="text-[13px] font-medium mb-1.5">{item.name}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-[var(--font-mono)] text-[13px] text-[var(--gold)]">
+                        {naira(item.price)}
+                      </span>
+                      {outOfStock ? (
+                        <Badge tone="danger">Out of stock</Badge>
+                      ) : item.stock <= item.low_stock_threshold ? (
+                        <Badge tone="warning">{item.stock} left</Badge>
+                      ) : null}
+                    </div>
                   </div>
                 </button>
               )

@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input, Label, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { ItemRepresentationPicker } from '@/components/ui/ItemRepresentationPicker'
 
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG')}`
 
@@ -38,6 +39,9 @@ export default function ItemsList() {
   const [trackStock, setTrackStock] = useState(true)
   const [isActive, setIsActive] = useState(true)
   const [lowStockThreshold, setLowStockThreshold] = useState('10')
+  const [representationType, setRepresentationType] = useState('color')
+  const [color, setColor] = useState('#5B3FA6')
+  const [imageUrl, setImageUrl] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -45,7 +49,7 @@ export default function ItemsList() {
       await Promise.all([
         supabase
           .from('items')
-          .select('id, name, price, cost, category_id, is_active, categories(name)')
+          .select('id, name, price, cost, category_id, is_active, representation_type, color, image_url, categories(name)')
           .eq('tenant_id', staff.tenant_id)
           .order('name'),
         supabase
@@ -104,10 +108,14 @@ export default function ItemsList() {
       track_stock: trackStock,
       is_active: isActive,
       low_stock_threshold: Number(lowStockThreshold) || 10,
+      representation_type: representationType,
+      color,
+      image_url: imageUrl,
     })
     setSaving(false)
     if (error) { setError(error.message); return }
     setName(''); setDescription(''); setPrice(''); setSku(''); setBarcode('')
+    setRepresentationType('color'); setColor('#5B3FA6'); setImageUrl(null)
     setShowForm(false)
     load()
   }
@@ -180,6 +188,19 @@ export default function ItemsList() {
             <Toggle checked={trackStock} onChange={() => setTrackStock((v) => !v)} />
           </div>
 
+          <div className="p-3.5 bg-[var(--surface-3)] rounded-[var(--radius)] mb-4">
+            <ItemRepresentationPicker
+              type={representationType}
+              color={color}
+              imageUrl={imageUrl}
+              onChange={({ representation_type, color: c, image_url }) => {
+                setRepresentationType(representation_type)
+                setColor(c)
+                setImageUrl(image_url)
+              }}
+            />
+          </div>
+
           {error && <p className="text-[13px] text-[var(--danger)] mb-4">{error}</p>}
 
           <Button type="submit" variant="primary" disabled={saving} className="w-full">
@@ -209,6 +230,11 @@ export default function ItemsList() {
             style={{ gridTemplateColumns: `2fr 1fr 100px 100px 90px ${branches.map(() => '90px').join(' ')}` }}
           >
             <span className="font-medium flex items-center gap-2">
+              {row.representation_type === 'image' && row.image_url ? (
+                <img src={row.image_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+              ) : (
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: row.color || '#5B3FA6' }} />
+              )}
               {row.name}
               {!row.is_active && <Badge tone="neutral">Hidden</Badge>}
             </span>

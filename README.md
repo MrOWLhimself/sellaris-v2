@@ -290,3 +290,32 @@ The sidebar's dark-appropriate text tokens are scoped via a
 `--ink-text`/`--ink-text-muted`/`--line` for that subtree, so nav
 labels don't go invisible against the dark background — verified with
 an actual screenshot, not just a "no JS errors" check.
+
+## Item images/colors on POS (and hardware/feature reference)
+
+Checked loyverse.com/hardware, /customer-display-system, /dashboard,
+/employee-management for reference. Takeaways:
+
+- **Hardware page**: extensive printer/scanner/cash-drawer compatibility
+  list. Our Bluetooth+Serial printer support is the right approach;
+  worth extending printer.js with a cash-drawer-kick ESC/POS command
+  later (drawers are usually triggered through the receipt printer,
+  not a separate integration).
+- **Customer Display System**: a genuinely separate second-screen app
+  (order details facing the customer, works over local Wi-Fi even
+  offline). Not built \u2014 real future feature, noted for the roadmap,
+  not attempted this round.
+- **Employee Management**: confirms our roles/permissions/invite
+  approach matches their model. One real gap worth flagging: Loyverse
+  uses PIN-based quick staff switching AT the POS (for busy
+  bars/restaurants swapping cashiers fast), while Sellaris currently
+  only has full email/password login. Worth a future PIN-login mode
+  for POS specifically.
+
+**Built this round**: items can now be represented on POS by either a
+color swatch (8 brand-tuned colors, matches Loyverse's picker pattern)
+or a real uploaded photo (Supabase Storage, public-read bucket,
+staff-only write). Verified end to end: a color-flagged item
+correctly flows through to the public menu view with zero manual
+wiring needed elsewhere, since it was added to the view once and both
+POS and PublicMenu already share the same query pattern.

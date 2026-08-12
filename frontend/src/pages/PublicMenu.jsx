@@ -17,7 +17,7 @@ export default function PublicMenu() {
       setLoading(true)
       const { data, error } = await supabase
         .from('public_menu_items')
-        .select('id, name, price, category_name, business_name')
+        .select('id, name, price, category_name, business_name, representation_type, color, image_url')
         .eq('tenant_slug', slug)
         .order('category_name')
 
@@ -69,9 +69,21 @@ export default function PublicMenu() {
                 <h2 className="text-[12px] uppercase tracking-wide text-[var(--gold)] mb-3">{category}</h2>
                 <div className="flex flex-col gap-3">
                   {catItems.map((item) => (
-                    <div key={item.id} className="flex justify-between items-baseline pb-3 border-b border-[var(--line)]">
-                      <span className="text-[14px]">{item.name}</span>
-                      <span className="font-[var(--font-mono)] text-[13px] text-[var(--ink-text-muted)] whitespace-nowrap ml-4">
+                    <div key={item.id} className="flex items-center justify-between gap-3 pb-3 border-b border-[var(--line)]">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {item.representation_type === 'image' && item.image_url ? (
+                          <img src={item.image_url} alt="" className="w-10 h-10 rounded-[var(--radius-sm)] object-cover shrink-0" />
+                        ) : (
+                          <span
+                            className="w-10 h-10 rounded-[var(--radius-sm)] shrink-0 flex items-center justify-center text-[13px] font-[var(--font-display)] text-white/90"
+                            style={{ backgroundColor: item.color || '#5B3FA6' }}
+                          >
+                            {item.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                        <span className="text-[14px] truncate">{item.name}</span>
+                      </div>
+                      <span className="font-[var(--font-mono)] text-[13px] text-[var(--ink-text-muted)] whitespace-nowrap">
                         {naira(item.price)}
                       </span>
                     </div>
