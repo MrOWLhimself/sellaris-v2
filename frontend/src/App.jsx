@@ -16,6 +16,10 @@ import Production from '@/pages/inventory/Production'
 import Suppliers from '@/pages/inventory/Suppliers'
 import InventoryHistory from '@/pages/inventory/InventoryHistory'
 import InventoryValuation from '@/pages/inventory/InventoryValuation'
+import BarFlow from '@/pages/BarFlow'
+import FinanceShell from '@/pages/finance/FinanceShell'
+import Payments from '@/pages/finance/Payments'
+import SalesSummary from '@/pages/finance/SalesSummary'
 
 export default function App() {
   return (
@@ -43,8 +47,11 @@ export default function App() {
               <Route path="history" element={<InventoryHistory />} />
               <Route path="valuation" element={<InventoryValuation />} />
             </Route>
-            <Route path="/bar-flow" element={<ComingSoon title="Bar flow" />} />
-            <Route path="/finance" element={<ComingSoon title="Finance" />} />
+            <Route path="/bar-flow" element={<BarFlow />} />
+            <Route path="/finance" element={<FinanceShell />}>
+              <Route index element={<Payments />} />
+              <Route path="sales-summary" element={<SalesSummary />} />
+            </Route>
             <Route path="/customers" element={<ComingSoon title="Customers" />} />
             <Route path="/staff" element={<ComingSoon title="Staff" />} />
             <Route path="/settings" element={<ComingSoon title="Settings" />} />

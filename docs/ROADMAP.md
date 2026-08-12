@@ -48,18 +48,29 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 **Phase 2 is fully complete.**
 
 ## Phase 3 — Bar Flow
-- ⬜ Barman-side receiving screen (sees orders sent from POS, marks
-  items ready)
-- ⬜ Waiter notification when order is ready to serve
-- ⬜ Open tickets / bar tabs (save order before payment)
+- ✅ Barman-side receiving screen — kanban board (New \u2192 Preparing \u2192
+  Ready), auto-refreshes every 5s so waiters/barmen see updates without
+  a manual reload
+- ✅ Open tickets / bar tabs (live in Finance \u2192 Payments now, since
+  they're the same underlying "unsettled order" concept)
+- ⬜ Push notification when order is ready (currently requires being on
+  the Bar Flow screen; polling isn't the same as a notification)
 
 ## Phase 4 — Finance
-- ⬜ Nigerian tax engine (VAT, PAYE)
-- ⬜ P&L report
-- ⬜ Payment confirmation workflow + staff debt (schema already built,
-  needs UI)
-- ⬜ Sales summary report (matched against the Loyverse screenshots —
-  gross sales, refunds, discounts, net sales, gross profit, trend chart)
+- ✅ Payment confirmation workflow — record a payment against an open
+  ticket, confirm or reject it; confirming enough payments auto-settles
+  the order; rejecting auto-creates staff debt (trigger already existed,
+  now has a real UI)
+- ✅ Sales summary report — date range, gross sales, cost of goods,
+  gross profit, margin, daily trend chart, per-day table
+- ✅ Historical accuracy fix: sale cost is now snapshotted at the moment
+  of sale (order_items.unit_cost), so profit reports stay correct even
+  after item costs change later via new GRNs
+- ⬜ Nigerian tax engine beyond VAT (PAYE needs a payroll module, not
+  built)
+- ⬜ Full P&L report (needs expense tracking, not built)
+- ⬜ Refunds/discounts (not tracked yet \u2014 sales summary currently
+  shows gross = net, noted honestly in the UI itself)
 
 ## Phase 5 — Customers & Loyalty
 - ⬜ Customer database
