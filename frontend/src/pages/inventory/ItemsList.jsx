@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input, Label, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { ItemRepresentationPicker } from '@/components/ui/ItemRepresentationPicker'
+import { exportItemsCsv, parseItemsCsv, importItems } from '@/lib/itemsCsv'
 
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG')}`
 
@@ -33,6 +34,8 @@ export default function ItemsList() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [addingCategory, setAddingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
   const [price, setPrice] = useState('')
   const [sku, setSku] = useState('')
   const [barcode, setBarcode] = useState('')
@@ -43,13 +46,19 @@ export default function ItemsList() {
   const [color, setColor] = useState('#5B3FA6')
   const [imageUrl, setImageUrl] = useState(null)
 
+  const fileInputRef = useRef(null)
+  const [importPreview, setImportPreview] = useState(null) // parsed rows awaiting confirmation
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState(null)
+  const [importResult, setImportResult] = useState(null)
+
   async function load() {
     setLoading(true)
     const [{ data: items, error: itmErr }, { data: branchList, error: brErr }, { data: stock, error: stErr }, { data: cats }] =
       await Promise.all([
         supabase
           .from('items')
-          .select('id, name, price, cost, category_id, is_active, representation_type, color, image_url, categories(name)')
+          .select('id, name, description, price, cost, sku, barcode, category_id, is_active, track_stock, representation_type, color, image_url, categories(name)')
           .eq('tenant_id', staff.tenant_id)
           .order('name'),
         supabase
@@ -89,6 +98,20 @@ export default function ItemsList() {
 
   useEffect(() => { load() }, [staff.tenant_id])
 
+  async function createCategoryInline() {
+    if (!newCategoryName.trim()) return
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ tenant_id: staff.tenant_id, name: newCategoryName.trim() })
+      .select('id, name')
+      .single()
+    if (error) { setError(error.message); return }
+    setCategories((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    setCategoryId(data.id)
+    setNewCategoryName('')
+    setAddingCategory(false)
+  }
+
   async function createItem(e) {
     e.preventDefault()
     setError(null)
@@ -120,20 +143,98 @@ export default function ItemsList() {
     load()
   }
 
+  function handleExport() {
+    exportItemsCsv(rows, branches)
+  }
+
+  async function handleFileChosen(e) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-choosing the same file later
+    if (!file) return
+    setImportError(null)
+    setImportResult(null)
+    try {
+      const parsed = await parseItemsCsv(file)
+      if (parsed.length === 0) {
+        setImportError('No valid rows found — make sure the file has a "Name" column.')
+        return
+      }
+      setImportPreview(parsed)
+    } catch (err) {
+      setImportError(err.message)
+    }
+  }
+
+  async function confirmImport() {
+    setImporting(true)
+    setImportError(null)
+    try {
+      const count = await importItems(staff.tenant_id, importPreview)
+      setImportResult(count)
+      setImportPreview(null)
+      load()
+    } catch (err) {
+      setImportError(err.message)
+    } finally {
+      setImporting(false)
+    }
+  }
+
   if (loading) return <p className="text-[13px] text-[var(--ink-text-muted)]">Loading items\u2026</p>
   if (error && !showForm) return <p className="text-[13px] text-[var(--danger)]">{error}</p>
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 gap-3">
         <p className="text-[13px] text-[var(--ink-text-muted)]">
           Cost isn't set here \u2014 it's calculated automatically from what you actually pay via
           Purchase Orders, so it's never a guess.
         </p>
-        <Button variant="primary" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? 'Cancel' : '+ Add item'}
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="secondary" onClick={handleExport}>Export</Button>
+          <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Import</Button>
+          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChosen} className="hidden" />
+          <Button variant="primary" onClick={() => setShowForm((s) => !s)}>
+            {showForm ? 'Cancel' : '+ Add item'}
+          </Button>
+        </div>
       </div>
+
+      {importError && <p className="text-[13px] text-[var(--danger)] mb-4">{importError}</p>}
+      {importResult !== null && (
+        <p className="text-[13px] text-[var(--success)] mb-4">Imported {importResult} item{importResult === 1 ? '' : 's'}.</p>
+      )}
+
+      {importPreview && (
+        <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--radius)] p-5 mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-[14px] font-medium">Import preview \u2014 {importPreview.length} items</h3>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setImportPreview(null)}>Cancel</Button>
+              <Button variant="primary" size="sm" disabled={importing} onClick={confirmImport}>
+                {importing ? 'Importing\u2026' : `Import ${importPreview.length} items`}
+              </Button>
+            </div>
+          </div>
+          <p className="text-[12px] text-[var(--ink-text-muted)] mb-3">
+            New categories will be created automatically. Cost isn't imported \u2014 items start at
+            \u20a60 and build up via real purchases, same as items added by hand.
+          </p>
+          <div className="max-h-64 overflow-auto bg-[var(--surface-3)] rounded-[var(--radius)]">
+            <div className="grid grid-cols-4 px-3 py-2 text-[11px] uppercase tracking-wide text-[var(--ink-text-muted)] border-b border-[var(--line)] sticky top-0 bg-[var(--surface-3)]">
+              <span>Name</span><span>Category</span><span className="text-right">Price</span><span>SKU</span>
+            </div>
+            {importPreview.slice(0, 200).map((r, i) => (
+              <div key={i} className="grid grid-cols-4 px-3 py-1.5 text-[12.5px] border-b border-[var(--line)] last:border-0">
+                <span className="truncate">{r.name}</span>
+                <span className="truncate text-[var(--ink-text-muted)]">{r.category || '\u2014'}</span>
+                <span className="text-right font-[var(--font-mono)]">{naira(r.price)}</span>
+                <span className="text-[var(--ink-text-muted)]">{r.sku || '\u2014'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={createItem} className="bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--radius)] p-5 mb-6">
@@ -144,10 +245,30 @@ export default function ItemsList() {
             </div>
             <div>
               <Label>Category</Label>
-              <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                <option value="">No category</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
+              {addingCategory ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="New category name"
+                    autoFocus
+                  />
+                  <Button type="button" size="sm" variant="primary" onClick={createCategoryInline}>Add</Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setAddingCategory(false)}>Cancel</Button>
+                </div>
+              ) : (
+                <Select
+                  value={categoryId}
+                  onChange={(e) => {
+                    if (e.target.value === '__add__') setAddingCategory(true)
+                    else setCategoryId(e.target.value)
+                  }}
+                >
+                  <option value="">No category</option>
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="__add__">+ Add category</option>
+                </Select>
+              )}
             </div>
           </div>
 

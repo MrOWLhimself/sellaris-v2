@@ -358,3 +358,30 @@ fallback to the normal email form when no cached profiles exist.
 Employee store assignment was already correct going into this \u2014 the
 invite flow's branch dropdown was already filtered to non-warehouse
 stores only.
+
+## Item Export/Import (CSV)
+
+Real migration path from Loyverse, not just a nice-to-have — the
+import parser was tested against an actual Loyverse export file
+(TuttiFrutti's real 43-item menu), not synthetic test data.
+
+- **Export**: downloads all items as CSV, including price/cost/SKU/
+  barcode/track-stock/available-for-sale, plus one "In stock [Branch]"
+  column per branch.
+- **Import**: accepts either Sellaris's own export format OR a raw
+  Loyverse export unmodified \u2014 the parser tolerantly matches
+  Loyverse's bracketed per-store columns (e.g. "Price [Store Name]",
+  "Available for sale [Store Name]") without requiring the file to be
+  edited first. Missing categories are created automatically. Shows a
+  preview (name/category/price/SKU) before committing anything.
+- **Cost is never imported**, consistent with every other part of the
+  platform \u2014 imported items start at \u20a60 cost and build up
+  through real Purchase Orders, exactly like items added by hand.
+- **Verified with the real file**: all 43 rows parsed correctly,
+  including the bracketed-column detection and graceful handling of
+  non-numeric prices ("variable", used by 2 items) falling back to
+  \u20a60 instead of crashing.
+
+Also added inline "+ Add category" in the Create Item form (matching
+the reference screenshot) \u2014 no need to leave the form to set up a
+new category first.
