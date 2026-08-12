@@ -25,12 +25,13 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 - ✅ No hardcoded business names anywhere in the UI — pulled from DB
 - ✅ Warehouse-first stock model: every business auto-gets a warehouse;
   purchases can only land there; stock reaches a store only via transfer
-- 🔜 **Transfer order screen** — staff-facing UI to move stock
-  warehouse → store (currently only testable via raw SQL)
-- ⬜ Purchase orders screen (plan a purchase, send to supplier)
+- ✅ **Transfer order screen** — staff can move stock warehouse → store
+  from a real form, with a full history list
+- ✅ Purchase orders screen (plan a purchase, send to supplier) +
+  "Mark received" which auto-generates the GRN into the warehouse
 - ⬜ Stock adjustments screen (damage, loss, manual correction)
 - ⬜ Inventory counts (stocktake)
-- ⬜ Suppliers directory
+- ✅ Suppliers directory
 - ⬜ Inventory valuation report
 
 ## Phase 3 — Bar Flow

@@ -6,6 +6,11 @@ import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import POS from '@/pages/POS'
 import ComingSoon from '@/pages/ComingSoon'
+import InventoryShell from '@/pages/inventory/InventoryShell'
+import ItemsList from '@/pages/inventory/ItemsList'
+import PurchaseOrders from '@/pages/inventory/PurchaseOrders'
+import TransferOrders from '@/pages/inventory/TransferOrders'
+import Suppliers from '@/pages/inventory/Suppliers'
 
 export default function App() {
   return (
@@ -22,7 +27,12 @@ export default function App() {
           >
             <Route path="/" element={<Dashboard />} />
             <Route path="/pos" element={<POS />} />
-            <Route path="/inventory" element={<ComingSoon title="Inventory" />} />
+            <Route path="/inventory" element={<InventoryShell />}>
+              <Route index element={<ItemsList />} />
+              <Route path="purchase-orders" element={<PurchaseOrders />} />
+              <Route path="transfer-orders" element={<TransferOrders />} />
+              <Route path="suppliers" element={<Suppliers />} />
+            </Route>
             <Route path="/bar-flow" element={<ComingSoon title="Bar flow" />} />
             <Route path="/finance" element={<ComingSoon title="Finance" />} />
             <Route path="/customers" element={<ComingSoon title="Customers" />} />
