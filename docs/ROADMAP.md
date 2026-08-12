@@ -107,7 +107,7 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 - ⬜ `sellaris.com` — landing page
 - ⬜ `sellaris.com/login` — staff login entry point
 - ⬜ Public ordering (customers order directly from the public menu) —
-  biggest single feature, deliberately last
+  paused for now, revisit later
 
 ## Phase 7 — Notifications & hardware
 - \u2705 Telegram notification pipeline \u2014 database side ready
