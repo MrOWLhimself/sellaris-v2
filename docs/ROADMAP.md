@@ -31,12 +31,21 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   "Mark received" which auto-generates the GRN into the warehouse
 - ✅ Stock adjustments screen (damage, loss, theft, expired, correction,
   manual receive — reason-driven, negative reasons block going below 0)
-- ⬜ Inventory counts (stocktake)
+- ✅ Inventory counts (stocktake) — partial or full, expected vs
+  physically counted, reconciles against current stock on completion
+  (not stale snapshot, avoids race conditions with sales/transfers
+  during the count)
 - ✅ Suppliers directory (expanded: contact, phone, email, address)
 - ✅ Inventory history — unified audit log (stock_movements table),
-  every GRN/transfer/sale/adjustment writes here automatically
+  every GRN/transfer/sale/adjustment/production/count writes here
+  automatically
 - ✅ Inventory valuation report (total inventory value, retail value,
   potential profit, margin — per item and overall)
+- ✅ Production (composite items) — turn ingredients into a made item
+  (e.g. a cocktail), output cost computed automatically from what was
+  actually consumed, not manually entered
+
+**Phase 2 is fully complete.**
 
 ## Phase 3 — Bar Flow
 - ⬜ Barman-side receiving screen (sees orders sent from POS, marks

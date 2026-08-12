@@ -11,6 +11,8 @@ import ItemsList from '@/pages/inventory/ItemsList'
 import PurchaseOrders from '@/pages/inventory/PurchaseOrders'
 import TransferOrders from '@/pages/inventory/TransferOrders'
 import StockAdjustments from '@/pages/inventory/StockAdjustments'
+import InventoryCounts from '@/pages/inventory/InventoryCounts'
+import Production from '@/pages/inventory/Production'
 import Suppliers from '@/pages/inventory/Suppliers'
 import InventoryHistory from '@/pages/inventory/InventoryHistory'
 import InventoryValuation from '@/pages/inventory/InventoryValuation'
@@ -35,6 +37,8 @@ export default function App() {
               <Route path="purchase-orders" element={<PurchaseOrders />} />
               <Route path="transfer-orders" element={<TransferOrders />} />
               <Route path="adjustments" element={<StockAdjustments />} />
+              <Route path="counts" element={<InventoryCounts />} />
+              <Route path="production" element={<Production />} />
               <Route path="suppliers" element={<Suppliers />} />
               <Route path="history" element={<InventoryHistory />} />
               <Route path="valuation" element={<InventoryValuation />} />

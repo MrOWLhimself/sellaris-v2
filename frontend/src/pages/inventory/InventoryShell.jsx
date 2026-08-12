@@ -5,6 +5,8 @@ const tabs = [
   { to: '/inventory/purchase-orders', label: 'Purchase orders' },
   { to: '/inventory/transfer-orders', label: 'Transfer orders' },
   { to: '/inventory/adjustments', label: 'Adjustments' },
+  { to: '/inventory/counts', label: 'Counts' },
+  { to: '/inventory/production', label: 'Production' },
   { to: '/inventory/suppliers', label: 'Suppliers' },
   { to: '/inventory/history', label: 'History' },
   { to: '/inventory/valuation', label: 'Valuation' },
