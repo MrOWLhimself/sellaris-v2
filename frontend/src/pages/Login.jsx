@@ -109,7 +109,7 @@ export default function Login() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+          placeholder="••••••••"
           required
           minLength={6}
           className="mb-4"
