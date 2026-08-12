@@ -29,10 +29,14 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   from a real form, with a full history list
 - ✅ Purchase orders screen (plan a purchase, send to supplier) +
   "Mark received" which auto-generates the GRN into the warehouse
-- ⬜ Stock adjustments screen (damage, loss, manual correction)
+- ✅ Stock adjustments screen (damage, loss, theft, expired, correction,
+  manual receive — reason-driven, negative reasons block going below 0)
 - ⬜ Inventory counts (stocktake)
-- ✅ Suppliers directory
-- ⬜ Inventory valuation report
+- ✅ Suppliers directory (expanded: contact, phone, email, address)
+- ✅ Inventory history — unified audit log (stock_movements table),
+  every GRN/transfer/sale/adjustment writes here automatically
+- ✅ Inventory valuation report (total inventory value, retail value,
+  potential profit, margin — per item and overall)
 
 ## Phase 3 — Bar Flow
 - ⬜ Barman-side receiving screen (sees orders sent from POS, marks
