@@ -2,14 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { MetricCard } from '@/components/ui/Card'
+import { DateRangePicker, daysAgo } from '@/components/ui/DateRangePicker'
 
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`
-
-function daysAgo(n) {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
-}
 
 export default function ProfitAndLoss() {
   const { staff } = useAuth()
@@ -86,18 +81,7 @@ export default function ProfitAndLoss() {
 
   return (
     <div>
-      <div className="flex gap-3 items-end mb-6">
-        <div>
-          <label className="block text-[13px] text-[var(--ink-text-muted)] mb-1.5">From</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="h-10 rounded-[var(--radius)] bg-[var(--surface-3)] border border-[var(--line-strong)] px-3 text-[14px] text-[var(--ink-text)]" />
-        </div>
-        <div>
-          <label className="block text-[13px] text-[var(--ink-text-muted)] mb-1.5">To</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="h-10 rounded-[var(--radius)] bg-[var(--surface-3)] border border-[var(--line-strong)] px-3 text-[14px] text-[var(--ink-text)]" />
-        </div>
-      </div>
+      <DateRangePicker from={from} to={to} onFromChange={setFrom} onToChange={setTo} />
 
       <div className="grid grid-cols-2 gap-3.5 mb-6">
         <MetricCard label="Gross profit" value={naira(grossProfit)} trend={grossProfit >= 0 ? 'up' : 'down'} accent />

@@ -19,9 +19,16 @@ import InventoryValuation from '@/pages/inventory/InventoryValuation'
 import BarFlow from '@/pages/BarFlow'
 import FinanceShell from '@/pages/finance/FinanceShell'
 import Payments from '@/pages/finance/Payments'
-import SalesSummary from '@/pages/finance/SalesSummary'
 import Expenses from '@/pages/finance/Expenses'
 import ProfitAndLoss from '@/pages/finance/ProfitAndLoss'
+import ReportsShell from '@/pages/finance/reports/ReportsShell'
+import SalesSummary from '@/pages/finance/reports/SalesSummary'
+import SalesByItem from '@/pages/finance/reports/SalesByItem'
+import SalesByCategory from '@/pages/finance/reports/SalesByCategory'
+import SalesByEmployee from '@/pages/finance/reports/SalesByEmployee'
+import SalesByPaymentType from '@/pages/finance/reports/SalesByPaymentType'
+import Discounts from '@/pages/finance/reports/Discounts'
+import Taxes from '@/pages/finance/reports/Taxes'
 import Customers from '@/pages/Customers'
 import PublicMenu from '@/pages/PublicMenu'
 import Signup from '@/pages/Signup'
@@ -61,7 +68,15 @@ export default function App() {
             <Route path="/bar-flow" element={<BarFlow />} />
             <Route path="/finance" element={<FinanceShell />}>
               <Route index element={<Payments />} />
-              <Route path="sales-summary" element={<SalesSummary />} />
+              <Route path="reports" element={<ReportsShell />}>
+                <Route index element={<SalesSummary />} />
+                <Route path="by-item" element={<SalesByItem />} />
+                <Route path="by-category" element={<SalesByCategory />} />
+                <Route path="by-employee" element={<SalesByEmployee />} />
+                <Route path="by-payment-type" element={<SalesByPaymentType />} />
+                <Route path="discounts" element={<Discounts />} />
+                <Route path="taxes" element={<Taxes />} />
+              </Route>
               <Route path="expenses" element={<Expenses />} />
               <Route path="profit-loss" element={<ProfitAndLoss />} />
             </Route>

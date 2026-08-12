@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 
 const tabs = [
   { to: '/finance', label: 'Payments', end: true },
-  { to: '/finance/sales-summary', label: 'Sales summary' },
+  { to: '/finance/reports', label: 'Reports' },
   { to: '/finance/expenses', label: 'Expenses' },
   { to: '/finance/profit-loss', label: 'Profit & Loss' },
 ]

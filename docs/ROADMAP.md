@@ -62,7 +62,13 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   the order; rejecting auto-creates staff debt (trigger already existed,
   now has a real UI)
 - ✅ Sales summary report — date range, gross sales, cost of goods,
-  gross profit, margin, daily trend chart, per-day table
+  gross profit, margin, daily trend chart, per-day table. Fully matches
+  the Loyverse reference layout, including the Discounts card that was
+  previously missing.
+- ✅ Full reports suite under Finance \u2192 Reports: Sales by item,
+  Sales by category, Sales by employee, Sales by payment type,
+  Discounts (per-order breakdown), Taxes (VAT collected) \u2014 matching
+  the full Loyverse reports menu
 - ✅ Historical accuracy fix: sale cost is now snapshotted at the moment
   of sale (order_items.unit_cost), so profit reports stay correct even
   after item costs change later via new GRNs
