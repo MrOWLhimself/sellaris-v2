@@ -18,6 +18,9 @@ export default function POS() {
   const [cart, setCart] = useState([]) // [{ id, qty }]
   const [sentToBar, setSentToBar] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerId, setCustomerId] = useState(null)
+  const [customerLookupBusy, setCustomerLookupBusy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -100,10 +103,41 @@ export default function POS() {
   const vat = Math.round(subtotal * VAT_RATE)
   const total = subtotal + vat
 
+  async function findOrCreateCustomer() {
+    if (!customerPhone.trim()) return null
+    setCustomerLookupBusy(true)
+
+    const { data: existing } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('tenant_id', staff.tenant_id)
+      .eq('phone', customerPhone.trim())
+      .maybeSingle()
+
+    if (existing) {
+      setCustomerLookupBusy(false)
+      setCustomerId(existing.id)
+      return existing.id
+    }
+
+    const { data: created, error: createErr } = await supabase
+      .from('customers')
+      .insert({ tenant_id: staff.tenant_id, name: customerPhone.trim(), phone: customerPhone.trim() })
+      .select('id')
+      .single()
+
+    setCustomerLookupBusy(false)
+    if (createErr) return null
+    setCustomerId(created.id)
+    return created.id
+  }
+
   async function sendToBar() {
     if (cart.length === 0) return
     setSaving(true)
     setError(null)
+
+    const linkedCustomerId = customerId || (await findOrCreateCustomer())
 
     const { data: order, error: orderErr } = await supabase
       .from('orders')
@@ -112,6 +146,7 @@ export default function POS() {
         branch_id: staff.branch_id,
         table_label: 'Table 5',
         status: 'sent_to_bar',
+        customer_id: linkedCustomerId,
       })
       .select('id')
       .single()
@@ -154,6 +189,8 @@ export default function POS() {
   function clearOrder() {
     setCart([])
     setSentToBar(false)
+    setCustomerPhone('')
+    setCustomerId(null)
   }
 
   if (loading) {
@@ -235,6 +272,14 @@ export default function POS() {
         <div className="text-[12px] uppercase tracking-wide text-[var(--ink-text-muted)] mb-3.5">
           Order
         </div>
+
+        <input
+          type="tel"
+          value={customerPhone}
+          onChange={(e) => { setCustomerPhone(e.target.value); setCustomerId(null) }}
+          placeholder="Customer phone (optional \u2014 for loyalty points)"
+          className="h-9 w-full rounded-[var(--radius)] bg-[var(--surface-3)] border border-[var(--line-strong)] px-3 text-[12.5px] text-[var(--ink-text)] placeholder:text-[var(--ink-text-faint)] mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--violet-bright)]"
+        />
 
         {cartLines.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">

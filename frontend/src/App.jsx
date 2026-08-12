@@ -20,6 +20,8 @@ import BarFlow from '@/pages/BarFlow'
 import FinanceShell from '@/pages/finance/FinanceShell'
 import Payments from '@/pages/finance/Payments'
 import SalesSummary from '@/pages/finance/SalesSummary'
+import Customers from '@/pages/Customers'
+import PublicMenu from '@/pages/PublicMenu'
 
 export default function App() {
   return (
@@ -27,6 +29,7 @@ export default function App() {
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/menu/:slug" element={<PublicMenu />} />
           <Route
             element={
               <ProtectedRoute>
@@ -52,7 +55,7 @@ export default function App() {
               <Route index element={<Payments />} />
               <Route path="sales-summary" element={<SalesSummary />} />
             </Route>
-            <Route path="/customers" element={<ComingSoon title="Customers" />} />
+            <Route path="/customers" element={<Customers />} />
             <Route path="/staff" element={<ComingSoon title="Staff" />} />
             <Route path="/settings" element={<ComingSoon title="Settings" />} />
           </Route>

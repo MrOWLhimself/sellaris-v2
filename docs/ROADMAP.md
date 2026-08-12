@@ -73,18 +73,30 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   shows gross = net, noted honestly in the UI itself)
 
 ## Phase 5 — Customers & Loyalty
-- ⬜ Customer database
-- ⬜ Loyalty program
-- ⬜ Online menu (view-only, tenant dashboard side)
+- ✅ Customer database (name, phone, email, notes)
+- ✅ Loyalty program \u2014 auto-awards 1 point per \u20a6100 spent when an
+  order settles; POS looks up or creates a customer by phone at the
+  till so points accrue from real sales, not a separate manual step
+- ✅ Online menu (view-only, public, no login) \u2014 see Phase 6 below,
+  built together since they share the same underlying customer-facing
+  surface
 
 ## Phase 6 — Multi-domain architecture
-- ⬜ `v.sellaris.com` — all tenant dashboards/POS, resolved by staff
-  session (mostly already true of what we've built — needs real
-  subdomain deployment)
+- ✅ Public menu feature itself \u2014 live at `/menu/:slug` (e.g.
+  `/menu/rogers-lounge`), reads from a dedicated `public_menu_items`
+  VIEW that exposes only name/price/category/business name \u2014 no
+  cost, no stock, no internal data, regardless of how it's queried
+  (stronger guarantee than RLS alone, verified: exactly 6 safe columns
+  exist on the view)
+- ⬜ **Blocked on infrastructure, not code**: true wildcard subdomains
+  (`{tenant-slug}.sellaris.com`) require owning `sellaris.com` and
+  configuring wildcard DNS in Vercel \u2014 neither has happened yet.
+  The feature above is the real implementation; moving it to its own
+  subdomain later is a domain/DNS step, not a rebuild.
+- ⬜ `v.sellaris.com` — all tenant dashboards/POS (works today on
+  `sellaris-mu.vercel.app`; renaming needs the same domain purchase)
 - ⬜ `sellaris.com` — landing page
 - ⬜ `sellaris.com/login` — staff login entry point
-- ⬜ `{tenant-slug}.sellaris.com` — public menu, wildcard subdomain,
-  no login required, separate lightweight app
 - ⬜ Public ordering (customers order directly from the public menu) —
   biggest single feature, deliberately last
 
