@@ -105,7 +105,8 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 - ⬜ PWA offline mode (works through power/data outages)
 
 ## Phase 9 — Launch prep
-- ⬜ Deploy frontend to Vercel
+- ✅ Deploy frontend to Vercel — live at https://sellaris-mu.vercel.app,
+  connected to GitHub for auto-deploy on every push
 - ⬜ Backend API on Hostinger VPS (webhooks, WhatsApp, Paystack)
 - ⬜ Real pricing/billing wired to Paystack
 - ⬜ TicketPass hotel integration webhook bridge
