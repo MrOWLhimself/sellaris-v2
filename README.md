@@ -188,3 +188,23 @@ is the method actually verified working via real interactive testing
 (`vite-plugin-singlefile`) was tried and reverted — it broke
 `import.meta.url` resolution inside the preview sandbox and threw
 "Invalid URL" errors. Stick with the multi-file relative-path build.
+
+## Known bug fixed: RLS self-reference on staff table
+
+The original "staff can view colleagues" policy checked tenant
+membership via a subquery that referenced the `staff` table from
+within its own policy (`tenant_id in (select tenant_id from staff
+where user_id = auth.uid())`). This self-referencing pattern caused
+sign-in to fail to find the user's own staff row after a successful
+login, sending them back to the claim-ownership screen even though
+they already owned the business.
+
+Fixed by adding a direct, unambiguous policy: `user_id = auth.uid()`.
+No subquery, no self-reference. Since Postgres OR's multiple permissive
+policies together, the original colleagues-visibility policy is
+unaffected \u2014 this just guarantees your OWN row is always visible
+regardless of how the tenant-scoped policy resolves.
+
+Lesson for future RLS policies: prefer a direct match on `auth.uid()`
+wherever possible over a subquery on the same table, even when a
+subquery seems more "correct" for a broader visibility rule.
