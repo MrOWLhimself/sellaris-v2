@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { updateCachedToken } from '@/lib/pinAuth'
 
 const AuthContext = createContext(null)
 
@@ -7,10 +8,12 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [staff, setStaff] = useState(null) // { id, tenant_id, branch_id, name, role }
   const [loading, setLoading] = useState(true)
+  const staffIdRef = useRef(null)
 
   async function loadStaff(userId) {
     if (!userId) {
       setStaff(null)
+      staffIdRef.current = null
       return
     }
     const { data } = await supabase
@@ -21,9 +24,11 @@ export function AuthProvider({ children }) {
 
     if (!data) {
       setStaff(null)
+      staffIdRef.current = null
       return
     }
 
+    staffIdRef.current = data.id
     setStaff({
       ...data,
       businessName: data.tenants?.name || null,
@@ -37,9 +42,15 @@ export function AuthProvider({ children }) {
       loadStaff(session?.user?.id).finally(() => setLoading(false))
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       loadStaff(session?.user?.id)
+
+      // Refresh tokens rotate on use — the cached one for PIN login
+      // must be updated every time, or the next unlock attempt fails.
+      if (event === 'TOKEN_REFRESHED' && session?.refresh_token && staffIdRef.current) {
+        updateCachedToken(staffIdRef.current, session.refresh_token)
+      }
     })
 
     return () => listener.subscription.unsubscribe()
@@ -63,9 +74,21 @@ export function AuthProvider({ children }) {
     await loadStaff(session?.user?.id)
   }
 
+  // Used by the PIN-unlock screen: swaps the active Supabase session
+  // to a different staff member's cached one, then updates the cache
+  // with whatever NEW refresh token comes back (rotation).
+  async function switchToStaffSession(staffId, refreshToken) {
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken })
+    if (error) return { error }
+    if (data.session?.refresh_token) {
+      await updateCachedToken(staffId, data.session.refresh_token)
+    }
+    return { error: null }
+  }
+
   return (
     <AuthContext.Provider
-      value={{ session, staff, loading, signIn, signUp, signOut, refreshStaff }}
+      value={{ session, staff, loading, signIn, signUp, signOut, refreshStaff, switchToStaffSession }}
     >
       {children}
     </AuthContext.Provider>

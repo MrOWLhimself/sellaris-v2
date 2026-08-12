@@ -319,3 +319,42 @@ staff-only write). Verified end to end: a color-flagged item
 correctly flows through to the public menu view with zero manual
 wiring needed elsewhere, since it was added to the view once and both
 POS and PublicMenu already share the same query pattern.
+
+## PIN-based quick login (per-device)
+
+Real login (email/password) happens once per staff member per device.
+After that, they tap their name and enter a 4-digit PIN to switch in —
+no email/password re-entry.
+
+How it actually works, since this matters for understanding what's
+secure and what isn't: the PIN is NOT a server-side auth factor. It's
+a local unlock for a Supabase session this exact device already has,
+cached from that one real login. Mechanism:
+
+1. On first successful email/password sign-in, staff is prompted to
+   set a PIN (skippable).
+2. The PIN is hashed client-side (SHA-256 + staff-id-as-salt, Web
+   Crypto, never sent anywhere) and stored in IndexedDB alongside the
+   current session's **refresh token**, scoped to that browser/device.
+3. Next time, tapping a cached name + entering the matching PIN calls
+   `supabase.auth.refreshSession()` with the cached refresh token —
+   this restores that staff member's real session without any network
+   password check.
+4. Refresh tokens rotate on every use (Supabase default) — the cache
+   is updated on every `TOKEN_REFRESHED` auth event, or the *next*
+   unlock attempt would fail. `AuthContext` tracks the current staff
+   id via a ref (not state) specifically to avoid a stale-closure bug
+   in the `onAuthStateChange` listener.
+5. If a cached refresh token is ever rejected (revoked, expired from
+   disuse), that PIN profile is automatically removed and the person
+   is prompted to sign in with email/password again — no silent
+   failure.
+
+**Not yet live-tested**: needs a real signed-in user to verify the
+full loop (set PIN \u2192 sign out \u2192 quick-switch back in). Verified
+what's possible from this sandbox: clean build, no JS errors, correct
+fallback to the normal email form when no cached profiles exist.
+
+Employee store assignment was already correct going into this \u2014 the
+invite flow's branch dropdown was already filtered to non-warehouse
+stores only.
