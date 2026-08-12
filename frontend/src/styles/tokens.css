@@ -2,41 +2,41 @@
 
 /*
   Sellaris design tokens.
-  Cool violet + brass-gold. Dark-first (POS/admin run on dark theme).
-  Every component reads these variables — never hardcode a hex value
-  in a component file. Change the brand here, it propagates everywhere.
+  Cool violet + brass-gold, on a light surface. Every component reads
+  these variables — never hardcode a hex value in a component file.
+  Change the brand here, it propagates everywhere.
 */
 
 :root {
   /* Surfaces */
-  --ink: #13111F;
-  --surface: #1C1930;
-  --surface-2: #26213D;
-  --surface-3: #302A4C;
-  --line: rgba(242, 240, 245, 0.08);
-  --line-strong: rgba(242, 240, 245, 0.16);
+  --ink: #FAFAFC;
+  --surface: #FFFFFF;
+  --surface-2: #F5F3FA;
+  --surface-3: #EDEAF5;
+  --line: rgba(19, 17, 31, 0.08);
+  --line-strong: rgba(19, 17, 31, 0.14);
 
   /* Brand */
   --violet: #5B3FA6;
-  --violet-dim: #432E7A;
-  --violet-bright: #7A5AC9;
-  --gold: #C9A227;
-  --gold-dim: #8F7419;
+  --violet-dim-dark: #432E7A;
+  --violet-bright: #6D4BBD;
+  --gold: #9C7A1F;
+  --gold-dim: #7A5C13;
 
   /* Text */
-  --ink-text: #F2F0F5;
-  --ink-text-muted: #8B87A0;
-  --ink-text-faint: #5E5A72;
+  --ink-text: #17151F;
+  --ink-text-muted: #6B6580;
+  --ink-text-faint: #A29CB3;
 
   /* Status (functional only, never brand) */
-  --success: #3FA66B;
-  --success-bg: rgba(63, 166, 107, 0.14);
-  --warning: #D6A237;
-  --warning-bg: rgba(214, 162, 55, 0.14);
-  --danger: #D6555B;
-  --danger-bg: rgba(214, 85, 91, 0.14);
-  --info: #5B7FC7;
-  --info-bg: rgba(91, 127, 199, 0.14);
+  --success: #2E8B57;
+  --success-bg: rgba(46, 139, 87, 0.12);
+  --warning: #B8860B;
+  --warning-bg: rgba(184, 134, 11, 0.12);
+  --danger: #C23B42;
+  --danger-bg: rgba(194, 59, 66, 0.1);
+  --info: #3F63A8;
+  --info-bg: rgba(63, 99, 168, 0.1);
 
   /* Type */
   --font-display: 'Fraunces', serif;
@@ -53,4 +53,17 @@ body {
   background: var(--ink);
   color: var(--ink-text);
   font-family: var(--font-body);
+}
+
+/*
+  The sidebar stays dark intentionally (branded navigation, common
+  pattern — Notion/Linear/Vercel) while the main content area is now
+  light. Rather than special-case every text color inside the sidebar,
+  scope a local override of the shared tokens so var(--ink-text) etc.
+  resolve correctly for BOTH contexts depending on where they're used.
+*/
+.sidebar-dark {
+  --ink-text: #F2F0F5;
+  --ink-text-muted: #8B87A0;
+  --line: rgba(242, 240, 245, 0.08);
 }

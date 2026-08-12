@@ -11,8 +11,12 @@ import { cn } from '@/lib/utils'
 */
 
 const variants = {
+  // Violet always needs light text on top, regardless of the overall
+  // light/dark theme — hardcoded here on purpose, not the shared
+  // --ink-text token (which now correctly means "dark" for the rest
+  // of the light-themed app).
   primary:
-    'bg-[var(--violet)] text-[var(--ink-text)] hover:bg-[var(--violet-bright)] active:scale-[0.98]',
+    'bg-[var(--violet)] text-[#F5F3FA] hover:bg-[var(--violet-bright)] active:scale-[0.98]',
   secondary:
     'bg-transparent border border-[var(--line-strong)] text-[var(--ink-text)] hover:bg-[var(--surface-2)] active:scale-[0.98]',
   ghost:

@@ -20,7 +20,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen flex">
-      <aside className="w-[220px] shrink-0 bg-[#0F0D1A] p-4 border-r border-[var(--line)] flex flex-col">
+      <aside className="sidebar-dark w-[220px] shrink-0 bg-[#0F0D1A] p-4 border-r border-[var(--line)] flex flex-col">
         <div className="font-[var(--font-display)] text-[20px] font-semibold px-2 mb-8 flex items-center justify-between">
           <span>Sell<span className="text-[var(--violet-bright)]">aris</span></span>
           <span
@@ -37,7 +37,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 `px-3 py-2.5 rounded-[var(--radius-sm)] text-[13.5px] flex items-center gap-2.5 transition-colors ${
                   isActive
-                    ? 'bg-[var(--violet-dim)]/30 text-[var(--ink-text)] font-medium border-l-2 border-[var(--violet-bright)] -ml-px pl-[10px]'
+                    ? 'bg-[var(--violet-dim-dark)]/30 text-[var(--ink-text)] font-medium border-l-2 border-[var(--violet-bright)] -ml-px pl-[10px]'
                     : 'text-[var(--ink-text-muted)] hover:text-[var(--ink-text)] hover:bg-[var(--surface-2)]'
                 }`
               }

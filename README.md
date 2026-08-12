@@ -263,3 +263,30 @@ its branch.
 Each business owner then gets their own chat ID (message the bot,
 it replies with their ID) and pastes it into Settings → Telegram
 notifications.
+
+## Theme flip: dark → light background
+
+Switched the base surfaces from dark violet-ink to light, per direct
+request. Kept the sidebar intentionally dark (Notion/Linear/Vercel
+pattern) rather than going fully flat white everywhere, so navigation
+still feels branded.
+
+This wasn't a simple value swap — two real bugs had to be caught and
+fixed along the way:
+
+1. `--violet-dim` was used both in the (still-dark) sidebar's active
+   nav state AND on the (now-light) MetricCard accent border. Split
+   into `--violet-dim-dark` for the sidebar and left MetricCard using
+   the solid `--violet` for its border, since a light lavender tint
+   is invisible as a border on white.
+2. Button's "primary" variant used the shared `--ink-text` token for
+   its label — that token now means "dark text for light surfaces,"
+   but a violet-filled button always needs light text regardless of
+   the overall theme. Hardcoded that one, on purpose, with a comment
+   explaining why.
+
+The sidebar's dark-appropriate text tokens are scoped via a
+`.sidebar-dark` class in tokens.css that locally overrides
+`--ink-text`/`--ink-text-muted`/`--line` for that subtree, so nav
+labels don't go invisible against the dark background — verified with
+an actual screenshot, not just a "no JS errors" check.
