@@ -178,3 +178,19 @@ correctly decrements Ijagun's stock, not the warehouse's.
 Not yet built: a UI for creating/completing transfer orders (currently
 only testable via SQL) \u2014 this is the next piece under the Inventory
 module.
+
+## Sharing a preview build
+
+The real app uses `vite.config.js` (multi-file build, for Vercel).
+For sharing a standalone preview file with the person, use
+`vite.config.preview.js` instead — it bundles everything (JS, CSS)
+into ONE self-contained HTML file via `vite-plugin-singlefile`, since
+multi-file builds don't survive being shared as a single artifact.
+
+```
+npx vite build --config vite.config.preview.js
+```
+
+Output goes to `preview-build/index.html` — copy that single file to
+outputs. Verified working via both a local server and direct `file://`
+open (tested with Playwright headless browser before sharing).
