@@ -1,5 +1,8 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
+import { BranchProvider } from '@/context/BranchContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'
 import Login from '@/pages/Login'
@@ -47,7 +50,9 @@ import AccessRights from '@/pages/staff/AccessRights'
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
+      <BranchProvider>
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -105,6 +110,8 @@ export default function App() {
           </Route>
         </Routes>
       </HashRouter>
+      </BranchProvider>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }

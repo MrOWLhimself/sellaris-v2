@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { useBranch } from '@/context/BranchContext'
 import { useOfflineSync } from '@/hooks/useOfflineSync'
 import { Badge } from '@/components/ui/Badge'
 import { getNavItemsForModules } from '@/lib/modules'
@@ -7,18 +8,36 @@ import { getNavItemsForModules } from '@/lib/modules'
 export function AppShell() {
   const { staff, signOut } = useAuth()
   const { isOnline, pending, failedCount } = useOfflineSync()
+  const { activeBranchId, setActiveBranchId, availableBranches, canSwitch } = useBranch()
   const navItems = getNavItemsForModules(staff?.enabledModules)
 
   return (
     <div className="min-h-screen flex">
       <aside className="sidebar-dark w-[220px] shrink-0 bg-[#0F0D1A] p-4 border-r border-[var(--line)] flex flex-col">
-        <div className="font-[var(--font-display)] text-[20px] font-semibold px-2 mb-8 flex items-center justify-between">
+        <div className="font-[var(--font-display)] text-[20px] font-semibold px-2 mb-4 flex items-center justify-between">
           <span>Sell<span className="text-[var(--violet-bright)]">aris</span></span>
           <span
             className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`}
             title={isOnline ? 'Online' : 'Offline'}
           />
         </div>
+
+        {canSwitch && (
+          <div className="px-2 mb-4">
+            <label className="text-[10px] uppercase tracking-wide text-[var(--ink-text-muted)] mb-1 block">
+              Branch
+            </label>
+            <select
+              value={activeBranchId || ''}
+              onChange={(e) => setActiveBranchId(e.target.value)}
+              className="w-full h-8 rounded-[var(--radius-sm)] bg-[var(--surface-2)] border border-[var(--line-strong)] px-2 text-[12.5px] text-[var(--ink-text)]"
+            >
+              {availableBranches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <nav className="flex flex-col gap-0.5 flex-1">
           {navItems.map((item) => (
             <NavLink

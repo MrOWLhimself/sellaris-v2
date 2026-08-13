@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+import { useBranch } from '@/context/BranchContext'
 import { buildReceiptBytes, printViaBluetooth, printViaSerial } from '@/lib/printer'
 import { queueSale, getAllQueuedSales, retrySale, removeSale } from '@/lib/offlineQueue'
 import { syncPendingSales } from '@/lib/offlineSync'
@@ -24,6 +25,7 @@ const CORE_ORDER_TYPES = ALL_ORDER_TYPES.filter((t) => !['table', 'bar_tab'].inc
 
 export default function POS() {
   const { staff } = useAuth()
+  const { activeBranchId } = useBranch()
   const [vatRate, setVatRate] = useState(0.075)
   const [categories, setCategories] = useState([])
   const [items, setItems] = useState([])
@@ -54,7 +56,7 @@ export default function POS() {
       setLoading(true)
       setError(null)
 
-      if (!staff.branch_id) {
+      if (!activeBranchId) {
         setError('No branch assigned to your account yet. Ask an owner to assign you to a store.')
         setLoading(false)
         return
@@ -76,7 +78,7 @@ export default function POS() {
         supabase
           .from('item_stock')
           .select('item_id, stock')
-          .eq('branch_id', staff.branch_id),
+          .eq('branch_id', activeBranchId),
       ])
 
       if (cancelled) return
@@ -95,18 +97,18 @@ export default function POS() {
 
     load()
     return () => { cancelled = true }
-  }, [staff.tenant_id])
+  }, [staff.tenant_id, activeBranchId])
 
   async function refreshQueuedSales() {
     const all = await getAllQueuedSales()
-    setQueuedSales(all.filter((s) => s.branchId === staff.branch_id))
+    setQueuedSales(all.filter((s) => s.branchId === activeBranchId))
   }
 
   useEffect(() => {
     refreshQueuedSales()
     const interval = setInterval(refreshQueuedSales, 5000)
     return () => clearInterval(interval)
-  }, [staff.branch_id])
+  }, [activeBranchId])
 
   async function handleRetrySale(localId) {
     setRetrying(localId)
@@ -201,7 +203,7 @@ export default function POS() {
     if (!navigator.onLine) {
       await queueSale({
         tenantId: staff.tenant_id,
-        branchId: staff.branch_id,
+        branchId: activeBranchId,
         tableLabel,
         orderType,
         customerPhone: customerPhone.trim() || null,
@@ -222,7 +224,7 @@ export default function POS() {
 
       const { error: saleErr } = await supabase.rpc('create_pos_sale', {
         p_tenant_id: staff.tenant_id,
-        p_branch_id: staff.branch_id,
+        p_branch_id: activeBranchId,
         p_table_label: tableLabel,
         p_order_type: orderType,
         p_customer_id: linkedCustomerId,
@@ -240,7 +242,7 @@ export default function POS() {
       const { data: refreshedStock } = await supabase
         .from('item_stock')
         .select('item_id, stock')
-        .eq('branch_id', staff.branch_id)
+        .eq('branch_id', activeBranchId)
       if (refreshedStock) {
         const stockByItem = Object.fromEntries(refreshedStock.map((s) => [s.item_id, s.stock]))
         setItems((prev) => prev.map((i) => ({ ...i, stock: stockByItem[i.id] ?? i.stock })))
@@ -254,7 +256,7 @@ export default function POS() {
       if (looksLikeNetworkFailure) {
         await queueSale({
           tenantId: staff.tenant_id,
-          branchId: staff.branch_id,
+          branchId: activeBranchId,
           tableLabel,
           orderType,
           customerPhone: customerPhone.trim() || null,

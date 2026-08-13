@@ -66,11 +66,25 @@ since that's where the differentiation from Loyverse actually is.
   retail shop)
 - ✅ PIN attempt throttling/lockout — 5 wrong attempts locks that
   profile out for 60s on that device, tracked locally (IndexedDB)
-- ⬜ Explicit active branch state + branch switching (currently one
-  staff = one fixed branch, no switching UI)
-- ⬜ Global error handling (currently per-page try/catch, inconsistent)
-- ⬜ Application audit log (stock_movements covers inventory; nothing
-  covers auth, settings changes, staff management, etc.)
+- ✅ Explicit active branch state + branch switching — `BranchContext`
+  gives back-office roles (owner/administrator/manager) a real switcher
+  in the sidebar when they have more than one store; cashiers stay
+  pinned to their assigned branch. POS reads/writes against the
+  *active* branch, not a permanently fixed one.
+- ✅ Global error handling — a React `ErrorBoundary` now wraps the
+  whole app. **Verified properly, including catching my own first test
+  mistake**: an inline throw during JSX construction doesn't route
+  through React's error boundary at all (different failure mode from
+  a real component crash) — caught that, rewrote the test as an actual
+  component throwing during its own render, confirmed the recovery
+  screen shows instead of a blank page, then removed all test code
+  and confirmed zero trace of it remains.
+- ✅ Application audit log — real `audit_log` table (RLS: staff see
+  their tenant's log only, any authenticated user can log their own
+  actions), wired into sign-in success, staff invites, and app crashes
+  (via the ErrorBoundary). **Known honest gap**: failed sign-in
+  attempts can't be logged yet — there's no session to attribute them
+  to client-side; would need a server-side function.
 - ⬜ Failed-operation monitoring
 - ⬜ Live device testing: PIN login, offline sales, receipt printers
   (all built, none exercised on real hardware/real users yet)

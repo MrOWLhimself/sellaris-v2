@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { updateCachedToken } from '@/lib/pinAuth'
+import { logAudit } from '@/lib/audit'
 
 const AuthContext = createContext(null)
 
@@ -59,6 +60,12 @@ export function AuthProvider({ children }) {
 
   async function signIn(email, password) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    // Note: failed sign-ins can't be attributed to a user (no session
+    // exists yet), so only successful sign-ins are logged here — RLS
+    // requires actor_user_id = auth.uid(), which is null pre-auth.
+    // Logging failed attempts would need a server-side function; not
+    // built yet, noted as a real gap rather than faked.
+    if (!error) logAudit('signin_success', { email })
     return { error }
   }
 

@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input, Label, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { logAudit } from '@/lib/audit'
 
 export default function Employees() {
   const { staff } = useAuth()
@@ -53,6 +54,7 @@ export default function Employees() {
     })
     setSaving(false)
     if (error) { setError(error.message); return }
+    logAudit('staff_invited', { email: email.trim().toLowerCase(), role_id: roleId, branch_id: branchId }, staff.tenant_id)
     setEmail('')
     setShowForm(false)
     load()
