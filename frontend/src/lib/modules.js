@@ -5,6 +5,7 @@ export const CORE_NAV_ITEMS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/inventory', label: 'Inventory' },
   { to: '/finance', label: 'Finance' },
+  { to: '/shifts', label: 'Shifts' },
   { to: '/customers', label: 'Customers' },
   { to: '/staff', label: 'Staff' },
   { to: '/settings', label: 'Settings' },

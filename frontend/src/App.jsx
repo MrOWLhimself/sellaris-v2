@@ -33,6 +33,7 @@ import SalesByPaymentType from '@/pages/finance/reports/SalesByPaymentType'
 import Discounts from '@/pages/finance/reports/Discounts'
 import Taxes from '@/pages/finance/reports/Taxes'
 import Customers from '@/pages/Customers'
+import Shifts from '@/pages/shifts/Shifts'
 import PublicMenu from '@/pages/PublicMenu'
 import Signup from '@/pages/Signup'
 import SettingsShell from '@/pages/settings/SettingsShell'
@@ -95,6 +96,7 @@ export default function App() {
               <Route path="profit-loss" element={<ProfitAndLoss />} />
             </Route>
             <Route path="/customers" element={<Customers />} />
+            <Route path="/shifts" element={<Shifts />} />
             <Route path="/staff" element={<StaffShell />}>
               <Route index element={<Employees />} />
               <Route path="roles" element={<AccessRights />} />

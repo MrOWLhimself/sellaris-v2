@@ -104,16 +104,28 @@ since that's where the differentiation from Loyverse actually is.
   migration in this project has been a tracked, named Supabase
   migration from day one, not ad-hoc SQL)*
 
-### Phase 2 — Complete the Loyverse-level operations layer ⬜
-POS: table management, floor layout, order types, modifiers, variants,
+### Phase 2 — Complete the Loyverse-level operations layer 🔜 *(started)*
+POS: table management, floor layout, order types ✅, modifiers, variants,
 split bill/payment, multi-payment-method orders, per-item and
 per-receipt discounts, void item/receipt, manager approval for
 restricted actions, hold/merge/move tickets, receipt history + reprint,
 barcode scanning (incl. camera + weight-embedded), cash drawer mgmt.
-Shift management: open/close shift, cash in/out, expected vs actual
-cash, shift reports. Customer Display System (separate screen, local
+
+**Shift management ✅** — open/close shift with opening cash, cash
+in/out during the shift, expected-vs-actual cash comparison at close,
+pending-approval workflow for a manager to review shortages before a
+shift finalizes. One open shift per staff member enforced at the DB
+level. **Verified with a real scenario, not just trusted**: opened a
+shift with ₦10,000, recorded a ₦2,000 cash-in, confirmed a ₦5,000 cash
+sale, manually replicated the RPC's expected-cash query and confirmed
+it correctly computes ₦17,000 — matching the actual close_shift logic
+exactly (couldn't invoke the RPC itself from this sandbox, since it
+requires a real auth session).
+
+Still to build: Customer Display System (separate screen, local
 connection). Kitchen Display System (generalizes the existing Bar Flow
 kanban to route by item category — Cocktail→Bar, Food→Kitchen, etc.)
+and everything else listed above.
 
 ### Phase 3 — HR and workforce (the Paycita phase) ⬜
 Full employee profiles (ID, photo, next of kin, employment history,
