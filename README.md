@@ -444,5 +444,3 @@ Also added inline "+ Add category" in the Create Item form (matching
 the reference screenshot) \u2014 no need to leave the form to set up a
 new category first.
 
-<!-- deploy trigger test: 2026-08-13T06:53:07Z -->
-<!-- deploy trigger test 2: 2026-08-13T07:00:26Z -->
