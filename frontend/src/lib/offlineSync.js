@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabase'
 import { getPendingSales, removeSale, markSaleFailed } from '@/lib/offlineQueue'
 
-// Attempts to replay every pending sale against the real database.
-// Runs the SAME insert sequence the online POS flow uses (order ->
-// order_items), so all the server-side enforcement (stock checks,
-// cost snapshotting) applies identically — an offline sale gets no
-// special treatment once it syncs.
+// Attempts to replay every pending sale against the real database via
+// the SAME atomic RPC the online POS flow uses — order + all line
+// items succeed together or not at all, and the idempotency key means
+// a sale that partially synced before a connection drop can be safely
+// retried without ever creating a duplicate order.
 //
 // A sale can legitimately fail to sync — e.g. stock ran out from
 // OTHER sales at this branch while this device was offline. That's
@@ -44,30 +44,17 @@ export async function syncPendingSales() {
         }
       }
 
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .insert({
-          tenant_id: sale.tenantId,
-          branch_id: sale.branchId,
-          table_label: sale.tableLabel,
-          status: 'sent_to_bar',
-          customer_id: customerId,
-        })
-        .select('id')
-        .single()
+      const { error: saleErr } = await supabase.rpc('create_pos_sale', {
+        p_tenant_id: sale.tenantId,
+        p_branch_id: sale.branchId,
+        p_table_label: sale.tableLabel,
+        p_order_type: sale.orderType || 'walk_in',
+        p_customer_id: customerId,
+        p_items: sale.cartLines.map((l) => ({ item_id: l.id, qty: l.qty, unit_price: l.price })),
+        p_idempotency_key: sale.idempotencyKey,
+      })
 
-      if (orderErr) throw orderErr
-
-      const orderItems = sale.cartLines.map((l) => ({
-        order_id: order.id,
-        item_id: l.id,
-        qty: l.qty,
-        unit_price: l.price,
-        status: 'sent_to_bar',
-      }))
-
-      const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
-      if (itemsErr) throw itemsErr
+      if (saleErr) throw saleErr
 
       await removeSale(sale.localId)
       synced++

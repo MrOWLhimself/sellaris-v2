@@ -9,6 +9,19 @@ import { syncPendingSales } from '@/lib/offlineSync'
 
 const naira = (n) => `\u20a6${Number(n).toLocaleString('en-NG')}`
 
+const ALL_ORDER_TYPES = [
+  { value: 'table', label: 'Table' },
+  { value: 'walk_in', label: 'Walk-in' },
+  { value: 'takeaway', label: 'Takeaway' },
+  { value: 'delivery', label: 'Delivery' },
+  { value: 'bar_tab', label: 'Bar tab' },
+]
+
+// Non-hospitality businesses (retail, pharmacy, etc.) never see
+// "Table" or "Bar tab" — those are the hospitality operational layer,
+// not a universal-core assumption.
+const CORE_ORDER_TYPES = ALL_ORDER_TYPES.filter((t) => !['table', 'bar_tab'].includes(t.value))
+
 export default function POS() {
   const { staff } = useAuth()
   const [vatRate, setVatRate] = useState(0.075)
@@ -17,7 +30,9 @@ export default function POS() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const hasTables = staff.enabledModules?.includes('bar_flow')
+  const ORDER_TYPES = hasTables ? ALL_ORDER_TYPES : CORE_ORDER_TYPES
   const [tableLabel, setTableLabel] = useState(hasTables ? 'Table 1' : 'Sale')
+  const [orderType, setOrderType] = useState(hasTables ? 'table' : 'walk_in')
 
   const [activeCategory, setActiveCategory] = useState('All')
   const [cart, setCart] = useState([]) // [{ id, qty }]
@@ -175,6 +190,12 @@ export default function POS() {
     setSaving(true)
     setError(null)
 
+    // Generated once per sale attempt. If this exact sale gets retried
+    // (offline sync, or a network hiccup mid-request), the same key is
+    // reused — the RPC treats a repeat as "already done" instead of
+    // creating a duplicate order.
+    const idempotencyKey = crypto.randomUUID()
+
     // Offline: skip the network entirely, queue locally. Customer
     // lookup/creation also needs the network, so it's deferred to sync time.
     if (!navigator.onLine) {
@@ -182,11 +203,13 @@ export default function POS() {
         tenantId: staff.tenant_id,
         branchId: staff.branch_id,
         tableLabel,
+        orderType,
         customerPhone: customerPhone.trim() || null,
         cartLines,
         subtotal,
         vat,
         total,
+        idempotencyKey,
       })
       setSaving(false)
       setSentToBar(true)
@@ -197,30 +220,17 @@ export default function POS() {
     try {
       const linkedCustomerId = customerId || (await findOrCreateCustomer())
 
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .insert({
-          tenant_id: staff.tenant_id,
-          branch_id: staff.branch_id,
-          table_label: tableLabel,
-          status: 'sent_to_bar',
-          customer_id: linkedCustomerId,
-        })
-        .select('id')
-        .single()
+      const { error: saleErr } = await supabase.rpc('create_pos_sale', {
+        p_tenant_id: staff.tenant_id,
+        p_branch_id: staff.branch_id,
+        p_table_label: tableLabel,
+        p_order_type: orderType,
+        p_customer_id: linkedCustomerId,
+        p_items: cartLines.map((l) => ({ item_id: l.id, qty: l.qty, unit_price: l.price })),
+        p_idempotency_key: idempotencyKey,
+      })
 
-      if (orderErr) throw orderErr
-
-      const orderItems = cartLines.map((l) => ({
-        order_id: order.id,
-        item_id: l.id,
-        qty: l.qty,
-        unit_price: l.price,
-        status: 'sent_to_bar',
-      }))
-
-      const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
-      if (itemsErr) throw itemsErr
+      if (saleErr) throw saleErr
 
       setSaving(false)
       setSentToBar(true)
@@ -246,11 +256,13 @@ export default function POS() {
           tenantId: staff.tenant_id,
           branchId: staff.branch_id,
           tableLabel,
+          orderType,
           customerPhone: customerPhone.trim() || null,
           cartLines,
           subtotal,
           vat,
           total,
+          idempotencyKey,
         })
         setSaving(false)
         setSentToBar(true)
@@ -328,10 +340,25 @@ export default function POS() {
         ) : (
           <h1 className="font-[var(--font-display)] text-[18px] font-medium">New sale</h1>
         )}
-        <p className="text-[13px] text-[var(--ink-text-muted)] mt-1 mb-5">
+        <p className="text-[13px] text-[var(--ink-text-muted)] mt-1 mb-3">
           {staff.branchName || 'Main branch'}
         </p>
 
+        <div className="flex gap-1.5 mb-5 flex-wrap">
+          {ORDER_TYPES.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setOrderType(t.value)}
+              className={`px-2.5 py-1 rounded-full text-[11.5px] transition-colors ${
+                orderType === t.value
+                  ? 'bg-[var(--violet)] text-[#F5F3FA]'
+                  : 'bg-[var(--surface-3)] text-[var(--ink-text-muted)] hover:text-[var(--ink-text)]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         <div className="flex gap-2 mb-5 flex-wrap">
           {categoryNames.map((cat) => (
             <button

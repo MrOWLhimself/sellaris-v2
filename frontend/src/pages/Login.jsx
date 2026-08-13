@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Label } from '@/components/ui/Input'
 import { PinPad } from '@/components/ui/PinPad'
 import { CURRENT_TENANT_ID } from '@/lib/tenant'
-import { listPinProfiles, verifyPin, savePinProfile, hasPinProfile, removePinProfile } from '@/lib/pinAuth'
+import { listPinProfiles, verifyPin, savePinProfile, hasPinProfile, removePinProfile, checkLockout, recordFailedAttempt, clearAttempts } from '@/lib/pinAuth'
 
 export default function Login() {
   const { session, staff, signIn, refreshStaff, switchToStaffSession } = useAuth()
@@ -87,13 +87,25 @@ export default function Login() {
 
   async function handlePinComplete(pin) {
     setPinError(null)
+
+    const lockout = await checkLockout(activeProfile.staffId)
+    if (lockout.locked) {
+      const seconds = Math.ceil(lockout.retryInMs / 1000)
+      setPinError(`Too many wrong attempts. Try again in ${seconds}s.`)
+      return
+    }
+
     setPinBusy(true)
     const refreshToken = await verifyPin(activeProfile.staffId, pin)
     if (!refreshToken) {
+      const attemptCount = await recordFailedAttempt(activeProfile.staffId)
       setPinBusy(false)
-      setPinError('Wrong PIN. Try again.')
+      const remaining = 5 - attemptCount
+      setPinError(remaining > 0 ? `Wrong PIN. ${remaining} attempt${remaining === 1 ? '' : 's'} left.` : 'Too many wrong attempts. Try again in 60s.')
       return
     }
+
+    await clearAttempts(activeProfile.staffId)
     const { error } = await switchToStaffSession(activeProfile.staffId, refreshToken)
     setPinBusy(false)
     if (error) {

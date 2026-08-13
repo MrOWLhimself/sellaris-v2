@@ -33,6 +33,124 @@ This changed two concrete things already built:
 
 ---
 
+## Chapter 2 — Toward a Dependable Business OS (8-phase plan)
+
+This supersedes the old "what's next" list below as the forward plan.
+Phases 1–9 below are now build history (mostly complete — the
+foundation this new plan builds on). Sequencing rationale: harden what
+exists before adding surface area; HR/payroll before deeper finance,
+since that's where the differentiation from Loyverse actually is.
+
+**Priority order**: 1 (Immediate) → 2 (Immediate) → 3 (High) → 4 (High)
+→ 5 (High) → 7 (High) → 6 (Medium) → 8 (Later)
+
+### Phase 1 — Production hardening 🔜 *(in progress)*
+- ✅ Atomic POS order creation — `create_pos_sale()` RPC replaces the
+  old two-step order+order_items insert. **Verified, not assumed**: ran
+  a direct transaction test that intentionally fails on the stock
+  check mid-way through — confirmed zero orphaned order rows survive.
+  A function body is one Postgres transaction; this makes the old
+  failure mode structurally impossible, not just less likely.
+- ✅ Same atomicity for offline sale sync — `offlineSync.js` now calls
+  the same RPC instead of its own separate two-insert sequence.
+- ✅ Idempotency protection — every sale (online or queued offline)
+  carries a client-generated UUID key; the RPC treats a repeat of the
+  same key as "already done" and returns the existing order instead of
+  creating a duplicate. Backed by a unique index on
+  `(tenant_id, idempotency_key)`.
+- ✅ Remove hardcoded `"Table 5"` — done, replaced with order-type-aware
+  labeling
+- ✅ Proper order type selection: Table / Walk-in / Takeaway / Delivery
+  / Bar tab — hospitality tenants see all 5, universal-core tenants see
+  only the 3 that apply to them (no "Table"/"Bar tab" forced on a
+  retail shop)
+- ✅ PIN attempt throttling/lockout — 5 wrong attempts locks that
+  profile out for 60s on that device, tracked locally (IndexedDB)
+- ⬜ Explicit active branch state + branch switching (currently one
+  staff = one fixed branch, no switching UI)
+- ⬜ Global error handling (currently per-page try/catch, inconsistent)
+- ⬜ Application audit log (stock_movements covers inventory; nothing
+  covers auth, settings changes, staff management, etc.)
+- ⬜ Failed-operation monitoring
+- ⬜ Live device testing: PIN login, offline sales, receipt printers
+  (all built, none exercised on real hardware/real users yet)
+- ⬜ Full RLS review pass across every tenant-facing table
+- ✅ Migrations formally versioned in Git *(already true — every
+  migration in this project has been a tracked, named Supabase
+  migration from day one, not ad-hoc SQL)*
+
+### Phase 2 — Complete the Loyverse-level operations layer ⬜
+POS: table management, floor layout, order types, modifiers, variants,
+split bill/payment, multi-payment-method orders, per-item and
+per-receipt discounts, void item/receipt, manager approval for
+restricted actions, hold/merge/move tickets, receipt history + reprint,
+barcode scanning (incl. camera + weight-embedded), cash drawer mgmt.
+Shift management: open/close shift, cash in/out, expected vs actual
+cash, shift reports. Customer Display System (separate screen, local
+connection). Kitchen Display System (generalizes the existing Bar Flow
+kanban to route by item category — Cocktail→Bar, Food→Kitchen, etc.)
+
+### Phase 3 — HR and workforce (the Paycita phase) ⬜
+Full employee profiles (ID, photo, next of kin, employment history,
+documents), departments with managers/cost centres, attendance
+(clock in/out via the existing PIN infrastructure, breaks, overtime,
+lateness), leave (types, requests, approvals, balances, calendar),
+and reusable multi-level workflow approvals (leave, expenses,
+procurement, refunds, stock adjustments — one engine, not bespoke per
+feature).
+
+### Phase 4 — Payroll and Nigerian compliance ⬜
+Salary structures, allowances, deductions (PAYE, pension, loans,
+advances), payroll runs (draft → preview → approval → lock → pay),
+payslips (PDF, YTD), and compliance calculations built as a separate,
+versionable module. Approved payroll must post to Finance as a salary
+expense automatically — no manual re-entry.
+
+### Phase 5 — QuickBooks-level finance ⬜
+Chart of accounts, general ledger (every transaction posts real
+journal entries — sales, inventory/COGS, payroll), bank/cash accounts
++ reconciliation, accounts payable (Supplier → PO → GRN → Bill →
+Payment, connecting directly to the existing inventory module),
+accounts receivable, upgraded expenses (vendors, approvals, recurring,
+reimbursement, cost centres), and the full financial report suite
+(P&L, Balance Sheet, Cash Flow, Trial Balance, GL, AR/AP aging, VAT,
+payroll liability, branch profitability).
+
+### Phase 6 — Business operations & Sellaris-exclusive features ⬜
+Procurement (Request → Approval → PO → Supplier → GRN → Bill →
+Payment — the existing PO/GRN modules already cover the back half),
+business assets (distinct from resale inventory — generators, POS
+terminals, furniture — with depreciation/maintenance/disposal),
+employee loans/salary advances with automatic payroll deduction, and
+(later) appraisal/performance reviews.
+
+### Phase 7 — Payments, billing and integrations ⬜
+Real Paystack billing (Tenant → Plan → Subscription → Webhook →
+Entitlement, where plans control actual capability gating, not just
+displayed price), payment collection (transfer verification, card
+terminal refs, QR, wallet), the TicketPass integration bridge, and
+WhatsApp notifications (receipts, low stock, daily summary, payroll,
+invoices, payment reminders). Telegram: pipeline already built, just
+needs the bot token (see Phase 7 note in build history below).
+
+### Phase 8 — Owner intelligence ⬜
+Proactive daily briefings (not just reports — "3 items may run out
+tomorrow," "Cashier 04 has a ₦7,500 shift difference"), a business
+health score, and forecasting (stock depletion, cash requirements,
+payroll obligations, sales trends, anomalies). Deliberately last — AI
+advisory features are only trustworthy once the underlying financial
+and operating data genuinely is.
+
+---
+
+## Build history: Phases 1–9 (V1 — mostly complete)
+
+The chapter below is the original build sequence that got Sellaris
+from nothing to a working multi-tenant platform. Kept for reference —
+it's the foundation Chapter 2 builds on, not a separate plan.
+
+---
+
 ## Phase 1 — Foundation
 - ✅ GitHub repo set up, real backup (no more lost files)
 - ✅ Design system: colors, type, component library (Button, Card, Badge,

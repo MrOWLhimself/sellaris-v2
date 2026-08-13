@@ -20,16 +20,57 @@ import { openDB } from 'idb'
 
 const DB_NAME = 'sellaris-pin-auth'
 const STORE_NAME = 'pin_profiles'
-const DB_VERSION = 1
+const ATTEMPTS_STORE = 'pin_attempts'
+const DB_VERSION = 2
+const MAX_ATTEMPTS = 5
+const LOCKOUT_MS = 60 * 1000 // 1 minute
 
 async function getDb() {
   return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'staffId' })
       }
+      if (!db.objectStoreNames.contains(ATTEMPTS_STORE)) {
+        db.createObjectStore(ATTEMPTS_STORE, { keyPath: 'staffId' })
+      }
     },
   })
+}
+
+// PIN attempt throttling: after 5 wrong PINs for one staff profile on
+// this device, lock that profile out for a minute. Purely local (no
+// server round-trip needed to enforce it) — this isn't stopping a
+// determined attacker with device access, it's stopping "someone
+// mashing random 4-digit codes" from ever succeeding by chance.
+export async function checkLockout(staffId) {
+  const db = await getDb()
+  const record = await db.get(ATTEMPTS_STORE, staffId)
+  if (!record) return { locked: false }
+
+  if (record.count >= MAX_ATTEMPTS) {
+    const elapsed = Date.now() - record.lastAttempt
+    if (elapsed < LOCKOUT_MS) {
+      return { locked: true, retryInMs: LOCKOUT_MS - elapsed }
+    }
+    // Lockout window passed — reset.
+    await db.delete(ATTEMPTS_STORE, staffId)
+    return { locked: false }
+  }
+  return { locked: false }
+}
+
+export async function recordFailedAttempt(staffId) {
+  const db = await getDb()
+  const existing = await db.get(ATTEMPTS_STORE, staffId)
+  const count = (existing?.count || 0) + 1
+  await db.put(ATTEMPTS_STORE, { staffId, count, lastAttempt: Date.now() })
+  return count
+}
+
+export async function clearAttempts(staffId) {
+  const db = await getDb()
+  await db.delete(ATTEMPTS_STORE, staffId)
 }
 
 async function hashPin(pin, staffId) {
