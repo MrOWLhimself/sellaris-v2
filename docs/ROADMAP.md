@@ -31,6 +31,23 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
   threshold, "available for sale" and "track stock" toggles. Cost is
   deliberately NOT an input here — verified a new item starts at
   ₦0.00 cost and only rises via a real GRN, never manual entry.
+- ✅ **Item color/photo representation on POS** — matches Loyverse's
+  "Representation on POS" pattern (8 brand-tuned color swatches or a
+  real uploaded photo). Live on POS product grid, Inventory item list,
+  and the public menu. Supabase Storage bucket (public read, staff
+  write only), verified end to end with a real test insert flowing
+  through to the public menu view.
+- ✅ **Item Import/Export (CSV)** — matches Loyverse's own export
+  column structure exactly, so a business migrating off Loyverse can
+  import their existing catalog file directly with zero reformatting
+  (bracketed per-store columns like `Price [Store Name]` are detected
+  and read correctly). Verified against a real Loyverse export file's
+  header row and sample data, not synthetic test data — confirmed
+  names/categories/prices parse correctly and a non-numeric price
+  ("variable") falls back to 0 instead of crashing the import. New
+  categories are auto-created on import. Cost is never imported or
+  exported as an editable value — consistent with the rest of the
+  platform, it stays derived from real GRNs only.
 - ✅ **Transfer order screen** — staff can move stock warehouse → store
   from a real form, with a full history list
 - ✅ Purchase orders screen (plan a purchase, send to supplier) +
