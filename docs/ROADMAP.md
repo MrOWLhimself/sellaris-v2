@@ -85,10 +85,21 @@ since that's where the differentiation from Loyverse actually is.
   (via the ErrorBoundary). **Known honest gap**: failed sign-in
   attempts can't be logged yet — there's no session to attribute them
   to client-side; would need a server-side function.
-- ⬜ Failed-operation monitoring
+- ✅ Failed-operation monitoring — offline sync failures now log to
+  the audit trail too, and Super Admin has a real cross-tenant "Recent
+  errors" feed (last 20, app crashes + sync failures), so a failure
+  is visible to you even if nobody happens to be standing at the till
+  where it happened.
 - ⬜ Live device testing: PIN login, offline sales, receipt printers
   (all built, none exercised on real hardware/real users yet)
-- ⬜ Full RLS review pass across every tenant-facing table
+- ✅ Full RLS review pass across every tenant-facing table — systematic,
+  not spot-checked: queried every public table's RLS status + policy
+  count. **Found and fixed a real bug**: `branches` had a SELECT
+  policy only, no INSERT/UPDATE — the "Add store" feature in Settings
+  has been silently broken this entire time, RLS would have rejected
+  the insert with no obvious surfaced error. `staff` and
+  `platform_admins` being SELECT-only turned out to be correct by
+  design (writes go through security-definer RPCs, not raw inserts).
 - ✅ Migrations formally versioned in Git *(already true — every
   migration in this project has been a tracked, named Supabase
   migration from day one, not ad-hoc SQL)*

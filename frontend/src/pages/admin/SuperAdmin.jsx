@@ -10,19 +10,22 @@ export default function SuperAdmin() {
   const { signOut } = useAuth()
   const [stats, setStats] = useState(null)
   const [tenants, setTenants] = useState([])
+  const [recentErrors, setRecentErrors] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [{ data: statsData, error: statsErr }, { data: tenantsData, error: tenantsErr }] = await Promise.all([
+      const [{ data: statsData, error: statsErr }, { data: tenantsData, error: tenantsErr }, { data: errorsData, error: errorsErr }] = await Promise.all([
         supabase.rpc('get_platform_stats'),
         supabase.rpc('get_platform_tenants'),
+        supabase.rpc('get_platform_recent_errors', { p_limit: 20 }),
       ])
-      if (statsErr || tenantsErr) setError((statsErr || tenantsErr).message)
+      if (statsErr || tenantsErr || errorsErr) setError((statsErr || tenantsErr || errorsErr).message)
       setStats(statsData?.[0] || null)
       setTenants(tenantsData || [])
+      setRecentErrors(errorsData || [])
       setLoading(false)
     }
     load()
@@ -71,6 +74,34 @@ export default function SuperAdmin() {
               </span>
             </div>
           ))}
+        </div>
+
+        <h2 className="text-[12px] uppercase tracking-wide text-[var(--ink-text-muted)] mb-3 mt-8">
+          Recent errors (last 20, across all businesses)
+        </h2>
+        <div className="bg-[var(--surface-2)] rounded-[var(--radius)] overflow-hidden">
+          {recentErrors.length === 0 ? (
+            <p className="text-[13px] text-[var(--ink-text-faint)] p-5">No errors logged. Good sign.</p>
+          ) : (
+            recentErrors.map((e, i) => (
+              <div key={e.id} className={`p-4 ${i !== recentErrors.length - 1 ? 'border-b border-[var(--line)]' : ''}`}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[13px] font-medium">{e.tenant_name || 'Unknown business'}</span>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={e.action === 'app_error' ? 'danger' : 'warning'}>
+                      {e.action === 'app_error' ? 'App crash' : 'Offline sync failed'}
+                    </Badge>
+                    <span className="text-[11px] text-[var(--ink-text-muted)]">
+                      {new Date(e.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[12px] text-[var(--ink-text-muted)] font-[var(--font-mono)] truncate">
+                  {e.details?.message || e.details?.error || JSON.stringify(e.details)}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

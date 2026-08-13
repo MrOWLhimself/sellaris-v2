@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { getPendingSales, removeSale, markSaleFailed } from '@/lib/offlineQueue'
+import { logAudit } from '@/lib/audit'
 
 // Attempts to replay every pending sale against the real database via
 // the SAME atomic RPC the online POS flow uses — order + all line
@@ -60,6 +61,15 @@ export async function syncPendingSales() {
       synced++
     } catch (e) {
       await markSaleFailed(sale.localId, e.message || 'Sync failed')
+      // Logged centrally too — a local device's IndexedDB is invisible
+      // to an owner checking on things remotely. This is what makes a
+      // sync failure a MONITORABLE event instead of something only
+      // visible if someone happens to be standing at that exact till.
+      logAudit('offline_sale_sync_failed', {
+        error: e.message,
+        total: sale.total,
+        itemCount: sale.cartLines?.length,
+      }, sale.tenantId)
       failed++
     }
   }
