@@ -443,3 +443,5 @@ import parser was tested against an actual Loyverse export file
 Also added inline "+ Add category" in the Create Item form (matching
 the reference screenshot) \u2014 no need to leave the form to set up a
 new category first.
+
+<!-- deploy trigger test: 2026-08-13T06:53:07Z -->
