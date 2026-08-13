@@ -444,3 +444,31 @@ Also added inline "+ Add category" in the Create Item form (matching
 the reference screenshot) \u2014 no need to leave the form to set up a
 new category first.
 
+
+## Incident: Vercel auto-deploy silently broke for ~23 hours
+
+Production was stuck serving commit `a2c5e10` (Phase 3+4, well before
+the theme flip, PWA, PIN login, module system, item images, atomic
+order RPC, branch switching, error boundary, and audit log work) while
+GitHub kept accepting pushes normally. Vercel's own dashboard flagged
+it correctly ("Ready \u00b7 **Stale**") but nothing alerted anyone \u2014
+found only because a build log got manually checked.
+
+**Root cause**: the GitHub App installation lost/never had proper
+access to the `sellaris-v2` repo after an earlier reconnect, so the
+webhook that triggers a new deployment on push silently stopped
+firing. No error, no notification \u2014 GitHub pushes just stopped
+reaching Vercel.
+
+**Fix**: reconnected the Vercel\u2013GitHub Git integration for this
+project. Verified with two real trigger-commit tests (not assumed
+fixed) \u2014 confirmed a genuinely new deployment builds AND promotes to
+Production automatically again.
+
+**Lesson**: after any Vercel/GitHub reconnect or settings change,
+verify with an actual throwaway commit and watch for a new deployment
+landing in Production \u2014 don't assume the connection survived. Worth
+periodically spot-checking that the live site's content actually
+matches the latest commit, since Vercel's own UI can silently be
+correct (showing "Stale") while nothing surfaces that fact anywhere
+a person would naturally look.
