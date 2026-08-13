@@ -1,24 +1,81 @@
-# Sellaris — Business OS for African SMEs
+# Sellaris — Business Operating System for African Businesses
 
-Multi-tenant SaaS platform: POS, inventory, bar/lounge ops, finance, HR/payroll,
-and customer loyalty, built Nigeria-first (Naira pricing, PAYE/FIRS-aware,
-offline-capable POS for unstable power/data).
+Sellaris is a business operating system for African businesses,
+bringing sales, inventory, staff, finance and daily operations into
+one platform. It is built around a **universal core** that applies to
+any business type, with optional **operational-layer modules** that
+activate based on what a specific business actually does.
 
-First tenant: **Roger's Lounge** (bar/lounge, Ijagun, Ijebu Ode, Ogun State).
+**Pilot tenant**: Roger's Lounge (bar/lounge, Ijagun, Ijebu Ode, Ogun
+State). Roger's Lounge is a real, active test environment — but it is
+the pilot, not the product definition. Nothing in the platform's
+architecture, naming, workflows, or permissions should assume every
+tenant runs a bar. See "Universal core vs. operational layers" below.
+
+## Universal core vs. operational layers
+
+Every tenant gets the same foundation, regardless of business type:
+
+- Sales and POS
+- Inventory and warehousing
+- Staff and HR
+- Finance and accounting
+- Customers and loyalty
+- Suppliers and procurement
+- Branches and locations
+- Reports and analytics
+- Payments
+- Notifications
+- Admin and permissions
+
+On top of that, a business gets an **operational layer** matched to
+its type — activated at signup via `tenants.enabled_modules`
+(`src/lib/modules.js` is the frontend registry; `create_business()` in
+Postgres sets the default per business type). Concepts like "Table",
+"Bar Flow", "Barman" are a hospitality operational layer, not a core
+assumption — they only appear in the UI for tenants whose type
+actually needs them (bar_lounge, restaurant). A retail shop, pharmacy,
+or wholesaler never sees them.
+
+| Business type | Sellaris-specific operations (beyond the core) |
+|---|---|
+| Supermarket / Retail | Barcode POS, shelves, stock counts, suppliers, cashier shifts |
+| Fashion | Sizes, colors, variants, branches, customer history |
+| Salon & Beauty | Services, stylists, appointments, commissions, products *(not built yet)* |
+| Restaurant | Tables, kitchen prep flow, modifiers, recipes, waiters |
+| Bar & Lounge | Bar Flow, tabs, tables, barman workflow, stock by bottle |
+| Pharmacy | Batch numbers, expiry dates, stock alerts, suppliers *(batch/expiry not built yet)* |
+| Hotel | Rooms, bookings, housekeeping, guest bills, TicketPass integration *(not built yet)* |
+| Electronics | Serial numbers, warranty, product variants *(not built yet)* |
+| Printing / Services | Jobs/orders, quotations, production stages *(not built yet)* |
+| Wholesale / Distributor | Bulk inventory, transfers, purchase orders, delivery |
+
+Honest status: **Retail, Restaurant, and Bar & Lounge have real,
+working operational layers today.** Hotel, Salon, Pharmacy (batch
+tracking specifically), Electronics, and Printing are represented in
+the business-type list and correctly get the universal core with no
+hospitality assumptions forced on them — but their *specific*
+operational layers (rooms/reservations, appointments/stylists,
+batch/expiry, serial numbers, job stages) are not built. Choosing one
+of those types today gives a clean, honest universal-core experience,
+not a broken half-built vertical.
 
 ## Why this exists
-Loyverse, QuickBooks, and Paycita each cover part of what a Nigerian SME
-needs, but none cover all of it, and none are built for Nigeria:
+Loyverse, QuickBooks, and Paycita each cover part of what an African
+SME needs, but none cover all of it, and none are built for Nigeria
+specifically:
 
 - **Loyverse** — free POS, good daily sales ops, but: no real cost tracking
   (items show ₦0 cost, no GRN-based costing), no negative-stock prevention,
-  no waiter→barman bar flow, no accounting/HR/payroll.
+  no accounting/HR/payroll, and it's built around a single generic retail/
+  hospitality model rather than a true multi-vertical core.
 - **QuickBooks** — powerful but $38–115/mo, USD-centric, poor offline mode,
   complex Nigerian tax setup.
 - **Paycita** — HR/payroll/ops, limited scope, mid-market focus.
 
-Sellaris covers POS + inventory + bar flow + finance + HR + loyalty in one
-system, priced in Naira, working offline.
+Sellaris covers POS + inventory + finance + HR + loyalty in one
+system, priced in Naira, working offline — with the operational layer
+matched to what the business actually does.
 
 ## Architecture (rebuild, [current date])
 
@@ -35,7 +92,8 @@ system, priced in Naira, working offline.
 ## Core modules (build order)
 
 1. Design system & component library
-2. POS + Bar Flow (waiter → barman → waiter dispatch, no dockets)
+2. Commerce and operations engine — POS + optional Bar Flow (hospitality
+   operational layer: waiter → barman → waiter dispatch, no dockets)
 3. Inventory + GRN (goods received) — auto cost from GRN, no manual entry,
    no sale without stock arriving via GRN first (fixes Loyverse's negative
    stock problem). Expanded scope based on direct Loyverse comparison:

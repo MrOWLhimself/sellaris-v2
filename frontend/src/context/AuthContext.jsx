@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
     }
     const { data } = await supabase
       .from('staff')
-      .select('id, tenant_id, branch_id, name, role, tenants(name), branches(name)')
+      .select('id, tenant_id, branch_id, name, role, tenants(name, enabled_modules), branches(name)')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -33,6 +33,7 @@ export function AuthProvider({ children }) {
       ...data,
       businessName: data.tenants?.name || null,
       branchName: data.branches?.name || null,
+      enabledModules: data.tenants?.enabled_modules || [],
     })
   }
 

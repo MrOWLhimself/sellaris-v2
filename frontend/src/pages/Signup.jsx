@@ -4,15 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input, Label, Select } from '@/components/ui/Input'
-
-const BUSINESS_TYPES = [
-  { value: 'bar_lounge', label: 'Bar / Lounge' },
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'retail', label: 'Retail shop' },
-  { value: 'pharmacy', label: 'Pharmacy' },
-  { value: 'salon', label: 'Salon / Spa' },
-  { value: 'other', label: 'Other' },
-]
+import { BUSINESS_TYPES } from '@/lib/modules'
 
 export default function Signup() {
   const { session, staff, signUp, refreshStaff } = useAuth()

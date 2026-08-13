@@ -8,6 +8,31 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 
 ---
 
+## Architecture note: Universal Core + Operational Layers
+
+Sellaris is a **business operating system for African businesses**,
+not a lounge-management product. Roger's Lounge is the pilot tenant
+and testing environment — it does not define the product.
+
+Every tenant gets the same universal core (Sales/POS, Inventory, Staff,
+Finance, Customers, Suppliers, Branches, Reports, Payments,
+Notifications, Admin). Hospitality-specific concepts (Table, Bar Flow,
+Barman) are an **optional operational layer**, activated per tenant by
+business type at signup, not a baked-in assumption. See README.md
+("Universal core vs. operational layers") for the full model and
+honest status per business type.
+
+This changed two concrete things already built:
+- `tenants.enabled_modules` (jsonb array) + `src/lib/modules.js` now
+  drive which nav items a tenant actually sees — a retail shop never
+  sees "Bar flow" in its sidebar.
+- POS's till label was hardcoded `"Table 5"` for every tenant
+  regardless of business type — now `hasTables` (derived from
+  `enabled_modules`) decides whether the till shows an editable table
+  field or a generic "New sale" label.
+
+---
+
 ## Phase 1 — Foundation
 - ✅ GitHub repo set up, real backup (no more lost files)
 - ✅ Design system: colors, type, component library (Button, Card, Badge,
@@ -15,7 +40,10 @@ Legend: ✅ done and verified · 🔜 next up · ⬜ not started
 - ✅ Supabase project created, dedicated to Sellaris
 - ✅ Core multi-tenant schema: tenants, branches, staff, categories, items
 
-## Phase 2 — POS + Inventory core
+## Phase 2 — Commerce and operations engine
+*(renamed from "POS + Inventory core" — some Sellaris tenants may never
+use a traditional POS; this is the commerce/inventory engine underneath
+POS, not POS itself)*
 - ✅ POS till page: cart, category filter, qty controls, VAT calc
 - ✅ GRN → auto cost + stock (fixes Loyverse's ₦0-cost problem)
 - ✅ Negative-stock blocked at the database level (fixes Roger's Lounge's

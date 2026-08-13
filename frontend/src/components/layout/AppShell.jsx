@@ -2,21 +2,12 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useOfflineSync } from '@/hooks/useOfflineSync'
 import { Badge } from '@/components/ui/Badge'
-
-const navItems = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/pos', label: 'POS / Till' },
-  { to: '/inventory', label: 'Inventory' },
-  { to: '/bar-flow', label: 'Bar flow' },
-  { to: '/finance', label: 'Finance' },
-  { to: '/customers', label: 'Customers' },
-  { to: '/staff', label: 'Staff' },
-  { to: '/settings', label: 'Settings' },
-]
+import { getNavItemsForModules } from '@/lib/modules'
 
 export function AppShell() {
   const { staff, signOut } = useAuth()
   const { isOnline, pending, failedCount } = useOfflineSync()
+  const navItems = getNavItemsForModules(staff?.enabledModules)
 
   return (
     <div className="min-h-screen flex">

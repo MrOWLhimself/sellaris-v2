@@ -16,6 +16,8 @@ export default function POS() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const hasTables = staff.enabledModules?.includes('bar_flow')
+  const [tableLabel, setTableLabel] = useState(hasTables ? 'Table 1' : 'Sale')
 
   const [activeCategory, setActiveCategory] = useState('All')
   const [cart, setCart] = useState([]) // [{ id, qty }]
@@ -179,7 +181,7 @@ export default function POS() {
       await queueSale({
         tenantId: staff.tenant_id,
         branchId: staff.branch_id,
-        tableLabel: 'Table 5',
+        tableLabel,
         customerPhone: customerPhone.trim() || null,
         cartLines,
         subtotal,
@@ -200,7 +202,7 @@ export default function POS() {
         .insert({
           tenant_id: staff.tenant_id,
           branch_id: staff.branch_id,
-          table_label: 'Table 5',
+          table_label: tableLabel,
           status: 'sent_to_bar',
           customer_id: linkedCustomerId,
         })
@@ -243,7 +245,7 @@ export default function POS() {
         await queueSale({
           tenantId: staff.tenant_id,
           branchId: staff.branch_id,
-          tableLabel: 'Table 5',
+          tableLabel,
           customerPhone: customerPhone.trim() || null,
           cartLines,
           subtotal,
@@ -280,7 +282,7 @@ export default function POS() {
       const bytes = buildReceiptBytes({
         businessName: staff.businessName || 'Sellaris',
         branchName: staff.branchName || '',
-        tableLabel: 'Table 5',
+        tableLabel,
         lines: cartLines,
         subtotal,
         vat,
@@ -317,7 +319,15 @@ export default function POS() {
   return (
     <div className="grid grid-cols-[1.4fr_1fr] gap-0 -m-7 min-h-[720px]">
       <div className="p-7 border-r border-[var(--line)]">
-        <h1 className="font-[var(--font-display)] text-[18px] font-medium">Table 5</h1>
+        {hasTables ? (
+          <input
+            value={tableLabel}
+            onChange={(e) => setTableLabel(e.target.value)}
+            className="font-[var(--font-display)] text-[18px] font-medium bg-transparent border-none outline-none focus:ring-2 focus:ring-[var(--violet-bright)] rounded-[var(--radius-sm)] px-1 -ml-1"
+          />
+        ) : (
+          <h1 className="font-[var(--font-display)] text-[18px] font-medium">New sale</h1>
+        )}
         <p className="text-[13px] text-[var(--ink-text-muted)] mt-1 mb-5">
           {staff.branchName || 'Main branch'}
         </p>
